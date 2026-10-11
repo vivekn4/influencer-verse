@@ -246,7 +246,7 @@ h2.st{font-size:20px;margin:14px 0 6px;color:#fff;text-shadow:0 0 14px rgba(155,
     <div class="card">
       <div class="kv"><span>AI voice tier</span><span class="aibadge sim" id="ai-tier-badge2">🤖 Simulated</span></div>
       <div class="setrow"><span>🤖 Puter.js AI (free, no key)</span><button class="btn small cyan" id="btn-ai-puter">Enable</button></div>
-      <div class="hint">Puter opens a one-time consent popup, then NPCs get LLM-written lines. Fully optional — the game is complete without it.</div>
+      <div class="hint">Built-in and free for every player — AI voices switch on automatically (one-time consent popup). Fully playable offline too.</div>
       <label class="lbl">Groq API key (free, optional)</label>
       <input type="text" id="inp-groq-key" placeholder="gsk_…" autocomplete="off">
       <label class="lbl">Gemini API key (free, optional)</label>
@@ -256,7 +256,7 @@ h2.st{font-size:20px;margin:14px 0 6px;color:#fff;text-shadow:0 0 14px rgba(155,
       <div class="setrow"><span>✨ Visual FX</span><div class="switch on" id="tgl-vfx"></div></div>
       <div class="setrow"><span>💾 Save game</span><button class="btn small cyan" id="btn-save-now">Save</button></div>
       <div class="setrow"><span>🗑 Reset run</span><button class="btn small ghost" id="btn-reset-save">Reset</button></div>
-      <div class="hint" style="margin-top:10px">Powered by Puter.js when AI is enabled · <a href="https://developer.puter.com" style="color:var(--neon-cyan)">developer.puter.com</a></div>
+      <div class="hint" style="margin-top:10px">Powered by Puter.js · AI voices on by default · <a href="https://developer.puter.com" style="color:var(--neon-cyan)">developer.puter.com</a></div>
     </div>
     <div class="card">
       <h2 class="st" style="margin-top:0">❓ How to play</h2>
@@ -872,7 +872,8 @@ const AI = {
   tierName(){ return {puter:'⚡ Puter AI', groq:'⚡ Groq', gemini:'⚡ Gemini', webllm:'⚡ Local LLM', sim:'🤖 Simulated'}[this.tier]; },
   refreshBadge(){ const t=this.tierName(), ai=this.tier!=='sim';
     for(const id of ['ai-tier-badge','ai-tier-badge2']){ const b=$(id); if(b){ b.textContent=t; b.className='aibadge '+(ai?'ai':'sim'); } }
-    const h=$('ai-tier-hint'); if(h) h.textContent = ai ? 'AI voices ON — NPC lines are LLM-written (sim still owns all game logic).' : 'Offline mode: NPCs run on the built-in personality engine. Enable AI in Settings for LLM-written lines.';
+    const h=$('ai-tier-hint'); if(h) h.textContent = ai ? 'AI voices ON — NPC lines are LLM-written (sim still owns all game logic).' : 'Offline mode: NPCs run on the built-in personality engine. AI voices switch on automatically when you\'re back online.';
+    const pb=$('btn-ai-puter'); if(pb){ const on=this.tier==='puter'; pb.textContent = on ? 'Active ✓' : 'Enable'; pb.disabled = on; }
   },
   async detect(){
     this.groqKey = localStorage.getItem('iv_groq')||'';
@@ -884,14 +885,15 @@ const AI = {
     else this.tier='sim';
     this.refreshBadge();
   },
-  async enablePuter(){
+  async enablePuter(silent=false, timeoutMs=20000){
     try{
       if(!window.puter?.ai?.chat) throw new Error('no puter');
-      const r = await Promise.race([ window.puter.ai.chat('Reply with exactly: ok'), new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),20000)) ]);
+      const r = await Promise.race([ window.puter.ai.chat('Reply with exactly: ok'), new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),timeoutMs)) ]);
       this.puterOK = true; this.tier='puter'; this.refreshBadge();
-      toast('⚡ Puter AI enabled — NPCs got voices!');
+      try{ localStorage.setItem('iv_ai','puter'); }catch(e){}
+      if(!silent) toast('⚡ Puter AI enabled — NPCs got voices!');
       return true;
-    }catch(e){ toast('Puter unavailable — staying simulated.'); this.tier = this.groqKey?'groq':this.geminiKey?'gemini':'sim'; this.refreshBadge(); return false; }
+    }catch(e){ if(!silent) toast('Puter unavailable — staying simulated.'); this.tier = this.groqKey?'groq':this.geminiKey?'gemini':'sim'; this.refreshBadge(); return false; }
   },
   async enableWebLLM(){
     if(this.webllmLoading) return;
@@ -1101,6 +1103,8 @@ async function startVerse(){
   const handle = $('player-handle').value.trim() || '@rookie';
   const arch = $('player-archetype').value;
   if(!input){ toast('Name a universe first 🌌'); return; }
+  // built-in free AI for every player: auto-connect (silent) on first summon — click gesture keeps the consent popup unblocked
+  if(AI.tier==='sim'){ try{ localStorage.getItem('iv_ai'); await AI.enablePuter(true, 8000); }catch(e){} }
   // crossover detect -> explicit opt-in
   if(CROSSOVER_RE.test(input) && !startVerse._xo){
     if(!confirm('⚡ Crossover mode detected ("'+input+'"). Characters from MULTIPLE universes will appear. Continue?')){
@@ -1118,7 +1122,7 @@ async function startVerse(){
       if(!gen){ toast('Couldn\'t summon that universe — try a curated realm or check AI settings.'); btn.disabled=false; btn.textContent='SUMMON THE CAST ⚡'; return; }
       pendingPack = {def:gen, custom:true};
     } else {
-      toast('🤖 Custom universes need AI voices — pick a curated realm or enable AI in Settings.');
+      toast('🤖 Free AI unreachable right now — pick a curated realm, or retry.');
       btn.disabled=false; btn.textContent='SUMMON THE CAST ⚡'; return;
     }
     pendingPack.handle = handle; pendingPack.arch = arch;
