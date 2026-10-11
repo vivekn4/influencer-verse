@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>VN Influencer-Verse — Become the #1 Influencer in Any Universe</title>
+<meta name="description" content="✨ VN Influencer-Verse — pick any fictional universe, out-post AI-powered NPC influencers, start rumors, survive drama, and become #1. Free, in-browser.">
+<script src="https://js.puter.com/v2/"></script>
+<style>
+:root{
+  --bg:#070714; --bg2:#0d0d22; --card:#12122b; --card2:#181838;
+  --neon-pink:#ff2fb3; --neon-cyan:#22e6ff; --neon-lime:#a6ff3f; --neon-gold:#ffd23f; --neon-purple:#9b5bff;
+  --txt:#f2f2ff; --dim:#9a9ac8; --danger:#ff4d5e; --ok:#3dff9e;
+  --radius:16px;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);
+  font-family:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;min-height:100vh;}
+body{background:
+  radial-gradient(1200px 600px at 20% -10%, rgba(155,91,255,.18), transparent 60%),
+  radial-gradient(1000px 500px at 90% 10%, rgba(255,47,179,.14), transparent 60%),
+  radial-gradient(900px 700px at 50% 110%, rgba(34,230,255,.10), transparent 60%),
+  var(--bg);}
+#vfx{position:fixed;inset:0;pointer-events:none;z-index:9999;}
+#app{max-width:640px;margin:0 auto;min-height:100vh;position:relative;padding-bottom:90px;}
+.screen{display:none;min-height:100vh;padding:18px 14px 40px;animation:fadeUp .35s ease;}
+.screen.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+@keyframes glowPulse{0%,100%{text-shadow:0 0 12px var(--neon-pink),0 0 42px var(--neon-pink);}50%{text-shadow:0 0 20px var(--neon-cyan),0 0 60px var(--neon-cyan);}}
+@keyframes floaty{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+@keyframes shimmer{0%{background-position:-400px 0;}100%{background-position:400px 0;}}
+@keyframes popIn{0%{transform:scale(.6);opacity:0;}70%{transform:scale(1.06);}100%{transform:scale(1);opacity:1;}}
+@keyframes ticker{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+.logo{font-size:clamp(38px,9vw,64px);font-weight:900;text-align:center;letter-spacing:2px;
+  background:linear-gradient(90deg,var(--neon-pink),var(--neon-purple),var(--neon-cyan),var(--neon-pink));
+  background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:shimmer 6s linear infinite;filter:drop-shadow(0 0 18px rgba(255,47,179,.55));margin:26px 0 4px;}
+.tagline{text-align:center;color:var(--dim);font-size:15px;margin-bottom:6px;}
+.vn-tag{display:inline-block;font-size:11px;font-weight:800;letter-spacing:3px;color:#0a0a14;
+  background:linear-gradient(90deg,var(--neon-gold),#ff9d3f);padding:3px 12px;border-radius:20px;
+  box-shadow:0 0 14px rgba(255,210,63,.7);}
+.center{text-align:center;}
+.btn{display:block;width:100%;padding:15px 18px;margin:10px 0;border:none;border-radius:var(--radius);
+  font-size:17px;font-weight:800;letter-spacing:.5px;color:#0a0a14;cursor:pointer;
+  background:linear-gradient(90deg,var(--neon-pink),var(--neon-purple));color:#fff;
+  box-shadow:0 0 18px rgba(255,47,179,.45),inset 0 1px 0 rgba(255,255,255,.35);
+  transition:transform .12s,box-shadow .12s;}
+.btn:active{transform:scale(.97);}
+.btn.cyan{background:linear-gradient(90deg,#0aa6c2,var(--neon-cyan));box-shadow:0 0 18px rgba(34,230,255,.45);}
+.btn.gold{background:linear-gradient(90deg,#c98a12,var(--neon-gold));box-shadow:0 0 18px rgba(255,210,63,.45);color:#231a02;}
+.btn.ghost{background:rgba(255,255,255,.06);color:var(--txt);box-shadow:none;border:1px solid rgba(255,255,255,.16);}
+.btn.small{padding:9px 12px;font-size:14px;width:auto;display:inline-block;margin:4px;}
+.btn:disabled{opacity:.45;filter:grayscale(.6);}
+.card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid rgba(155,91,255,.35);
+  border-radius:var(--radius);padding:14px;margin:10px 0;box-shadow:0 4px 24px rgba(0,0,0,.45);
+  animation:popIn .3s ease;}
+.card.hot{border-color:var(--neon-gold);box-shadow:0 0 22px rgba(255,210,63,.35);}
+input[type=text],textarea,select{width:100%;background:#0a0a1e;border:1px solid rgba(34,230,255,.4);
+  border-radius:12px;color:var(--txt);padding:13px;font-size:16px;margin:8px 0;outline:none;}
+input[type=text]:focus,textarea:focus{border-color:var(--neon-cyan);box-shadow:0 0 12px rgba(34,230,255,.35);}
+textarea{min-height:90px;resize:vertical;}
+label.lbl{display:block;font-size:13px;color:var(--dim);margin-top:10px;letter-spacing:1px;text-transform:uppercase;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;}
+.chip{padding:9px 14px;border-radius:24px;background:rgba(155,91,255,.15);border:1px solid var(--neon-purple);
+  font-size:14px;font-weight:700;cursor:pointer;transition:transform .1s;}
+.chip:active{transform:scale(.94);}
+.chip.sel{background:linear-gradient(90deg,var(--neon-purple),var(--neon-pink));box-shadow:0 0 12px rgba(155,91,255,.6);}
+.hud{position:sticky;top:0;z-index:50;background:rgba(7,7,20,.92);backdrop-filter:blur(8px);
+  border-bottom:1px solid rgba(155,91,255,.35);padding:10px 12px;display:flex;gap:8px;align-items:center;
+  flex-wrap:wrap;margin:0 -14px;padding-left:14px;padding-right:14px;}
+.hud .stat{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:10px;
+  padding:5px 10px;font-size:13px;font-weight:700;white-space:nowrap;}
+.hud .stat b{color:var(--neon-gold);}
+.tabs{position:fixed;bottom:0;left:0;right:0;z-index:60;display:flex;background:rgba(10,10,26,.96);
+  border-top:1px solid rgba(155,91,255,.4);backdrop-filter:blur(10px);max-width:640px;margin:0 auto;}
+.tab{flex:1;text-align:center;padding:12px 4px 14px;font-size:12px;font-weight:800;color:var(--dim);cursor:pointer;border:none;background:none;}
+.tab .ico{font-size:20px;display:block;margin-bottom:2px;}
+.tab.active{color:var(--neon-cyan);text-shadow:0 0 10px rgba(34,230,255,.7);}
+.tabpanel{display:none;}
+.tabpanel.active{display:block;animation:fadeUp .25s ease;}
+.post{background:linear-gradient(180deg,#14142e,#101024);border:1px solid rgba(255,255,255,.1);
+  border-radius:var(--radius);padding:12px;margin:10px 0;animation:popIn .3s ease;}
+.post.trending{border-color:var(--neon-gold);box-shadow:0 0 18px rgba(255,210,63,.3);}
+.post .head{display:flex;align-items:center;gap:10px;}
+.avatar{width:44px;height:44px;border-radius:50%;flex:0 0 44px;display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:900;color:#0a0a14;box-shadow:0 0 10px rgba(255,255,255,.15);}
+.post .who{flex:1;min-width:0;}
+.post .who .nm{font-weight:800;font-size:14px;}
+.post .who .hd{color:var(--dim);font-size:12px;}
+.post .time{color:var(--dim);font-size:11px;}
+.post .txt{margin:10px 0;font-size:15px;line-height:1.45;word-wrap:break-word;}
+.post .photoart{font-size:44px;text-align:center;padding:14px;background:rgba(0,0,0,.3);border-radius:12px;margin:8px 0;
+  letter-spacing:6px;}
+.post .actions{display:flex;gap:14px;margin-top:8px;color:var(--dim);font-size:13px;font-weight:700;}
+.post .actions span{cursor:pointer;user-select:none;}
+.post .actions span:hover{color:var(--neon-pink);}
+.badge{display:inline-block;font-size:10px;font-weight:900;padding:2px 8px;border-radius:10px;margin-left:6px;
+  letter-spacing:1px;}
+.badge.fire{background:linear-gradient(90deg,#ff5f2f,var(--neon-gold));color:#231100;animation:glowPulse 1.2s infinite;}
+.badge.rumor{background:rgba(155,91,255,.25);border:1px solid var(--neon-purple);color:#d9c2ff;}
+.badge.poll{background:rgba(34,230,255,.18);border:1px solid var(--neon-cyan);color:#bff3ff;}
+.comments{margin-top:8px;border-top:1px dashed rgba(255,255,255,.12);padding-top:8px;}
+.comment{display:flex;gap:8px;margin:7px 0;font-size:13px;}
+.comment .avatar{width:28px;height:28px;flex-basis:28px;font-size:14px;}
+.comment .cb{background:rgba(255,255,255,.05);border-radius:10px;padding:6px 10px;flex:1;}
+.comment .cb .cn{font-weight:800;font-size:12px;color:var(--neon-cyan);}
+.typing{color:var(--dim);font-size:12px;font-style:italic;padding:4px 0;}
+.rankrow{display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;margin:6px 0;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);}
+.rankrow.me{border-color:var(--neon-cyan);box-shadow:0 0 14px rgba(34,230,255,.3);}
+.rankrow.rival{border-color:var(--neon-pink);}
+.rankrow .pos{font-size:20px;font-weight:900;width:34px;text-align:center;}
+.rankrow .bar{height:8px;border-radius:4px;background:linear-gradient(90deg,var(--neon-purple),var(--neon-pink));
+  margin-top:4px;transition:width .5s;}
+.npcgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.npccard{background:var(--card);border:1px solid rgba(155,91,255,.3);border-radius:14px;padding:10px;text-align:center;cursor:pointer;}
+.npccard .avatar{width:54px;height:54px;font-size:26px;margin:0 auto 6px;}
+.npccard .nm{font-weight:800;font-size:13px;}
+.npccard .fl{color:var(--neon-gold);font-size:12px;font-weight:700;}
+.modal{position:fixed;inset:0;z-index:200;background:rgba(4,4,12,.82);display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);}
+.modal.open{display:flex;}
+.sheet{background:linear-gradient(180deg,#161631,#0e0e24);border-radius:20px 20px 0 0;width:100%;max-width:640px;
+  max-height:88vh;overflow-y:auto;padding:18px 16px 30px;border-top:2px solid var(--neon-purple);animation:fadeUp .25s ease;}
+.typegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0;}
+.typebtn{padding:12px 6px;border-radius:12px;border:2px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);
+  color:var(--txt);font-weight:800;font-size:13px;cursor:pointer;}
+.typebtn.sel{border-color:var(--neon-pink);background:rgba(255,47,179,.15);box-shadow:0 0 12px rgba(255,47,179,.4);}
+.meter{height:10px;border-radius:5px;background:rgba(255,255,255,.08);overflow:hidden;margin:6px 0;}
+.meter>div{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--neon-lime),var(--neon-gold),var(--danger));transition:width .3s;}
+#drama-banner{display:none;margin:10px 0;padding:12px;border-radius:12px;font-weight:800;text-align:center;
+  background:linear-gradient(90deg,rgba(255,77,94,.25),rgba(255,47,179,.25));border:1px solid var(--danger);
+  animation:popIn .3s ease;}
+#toast{position:fixed;bottom:86px;left:50%;transform:translateX(-50%) translateY(20px);z-index:300;
+  background:#1c1c3a;border:1px solid var(--neon-cyan);color:var(--txt);padding:10px 18px;border-radius:24px;
+  font-weight:700;font-size:14px;opacity:0;pointer-events:none;transition:all .25s;max-width:90vw;text-align:center;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.tickerwrap{overflow:hidden;white-space:nowrap;border-top:1px solid rgba(255,255,255,.1);border-bottom:1px solid rgba(255,255,255,.1);margin:8px -14px;padding:6px 0;}
+.ticker{display:inline-block;animation:ticker 22s linear infinite;font-size:13px;color:var(--neon-gold);font-weight:700;}
+.kv{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed rgba(255,255,255,.1);font-size:14px;}
+.kv b{color:var(--neon-cyan);}
+.relbar{height:8px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:4px;}
+.relbar>div{height:100%;border-radius:4px;}
+.setrow{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px dashed rgba(255,255,255,.1);}
+.switch{width:52px;height:28px;border-radius:14px;background:rgba(255,255,255,.15);position:relative;cursor:pointer;transition:background .2s;flex:0 0 52px;}
+.switch.on{background:linear-gradient(90deg,var(--neon-lime),#3dff9e);}
+.switch::after{content:'';position:absolute;width:22px;height:22px;border-radius:50%;background:#fff;top:3px;left:3px;transition:left .2s;}
+.switch.on::after{left:27px;}
+.aibadge{display:inline-block;padding:4px 12px;border-radius:14px;font-size:12px;font-weight:800;margin:4px 0;}
+.aibadge.sim{background:rgba(255,255,255,.1);color:var(--dim);}
+.aibadge.ai{background:linear-gradient(90deg,var(--neon-lime),#3dff9e);color:#06260f;box-shadow:0 0 10px rgba(166,255,63,.5);}
+.castscroll{display:flex;gap:10px;overflow-x:auto;padding:8px 2px;}
+.castcard{flex:0 0 150px;background:var(--card);border:1px solid rgba(155,91,255,.35);border-radius:14px;padding:10px;text-align:center;}
+.castcard .avatar{width:60px;height:60px;font-size:30px;margin:0 auto 6px;}
+.footer{text-align:center;color:var(--dim);font-size:12px;margin-top:26px;padding-bottom:10px;}
+h2.st{font-size:20px;margin:14px 0 6px;color:#fff;text-shadow:0 0 14px rgba(155,91,255,.8);}
+.hint{font-size:13px;color:var(--dim);line-height:1.5;}
+.big-emoji{font-size:56px;animation:floaty 3s ease-in-out infinite;}
+@media (max-width:420px){ .npcgrid{grid-template-columns:repeat(2,1fr);} .typegrid{grid-template-columns:repeat(2,1fr);} }
+</style>
+</head>
+<body>
+<canvas id="vfx"></canvas>
+<div id="app">
+
+<!-- SPLASH -->
+<section id="screen-splash" class="screen">
+  <div class="center" style="margin-top:8vh">
+    <div class="big-emoji">📱⚡</div>
+    <div class="logo">INFLUENCER<br>VERSE</div>
+    <div class="tagline">Pick any universe. Out-post the AI legends.<br>Become the <b style="color:var(--neon-gold)">#1 influencer</b> — or get canceled trying.</div>
+    <div style="margin:14px 0"><span class="vn-tag">VN</span></div>
+    <button class="btn" id="btn-enter">⚡ ENTER THE VERSE</button>
+    <button class="btn ghost" id="btn-continue" style="display:none">▶ CONTINUE SAVED GAME</button>
+    <div class="hint center" style="margin-top:18px">100% free · in-browser · AI NPCs with offline fallback<br>No account · no server · your saves never leave your device</div>
+  </div>
+  <div class="footer"><span class="vn-tag">VN</span> · Influencer-Verse · a VN joint</div>
+</section>
+
+<!-- UNIVERSE PICKER -->
+<section id="screen-universe" class="screen">
+  <h2 class="st">🌌 Choose your universe</h2>
+  <div class="hint">Type <b>any</b> fictional universe — the Verse summons its characters as rival influencers.
+  <br>🛡️ <b>Narnia test:</b> only characters from YOUR universe ever appear. Crossovers need your explicit OK.</div>
+  <label class="lbl">Universe name (free text)</label>
+  <input type="text" id="uni-input" placeholder='e.g. "Naruto", "Harry Potter", "One Piece"…' autocomplete="off">
+  <label class="lbl">Or pick a curated parody realm (works offline)</label>
+  <div class="chips" id="uni-chips"></div>
+  <div class="chips">
+    <div class="chip" id="btn-surprise">🎲 Surprise me</div>
+  </div>
+  <div class="card">
+    <div class="kv"><span>Your handle</span></div>
+    <input type="text" id="player-handle" placeholder="@your_handle" maxlength="20" autocomplete="off">
+    <label class="lbl">Your vibe (archetype)</label>
+    <select id="player-archetype">
+      <option value="gremlin">😈 Chaos Gremlin — high spice, high risk</option>
+      <option value="wholesome">🌸 Wholesome — safe, steady growth</option>
+      <option value="analyst">🧠 Analyst — credibility, slow burn</option>
+      <option value="menace">🔥 Menace — feuds fuel fame</option>
+    </select>
+    <div class="kv" style="margin-top:8px"><span>AI voices</span><span class="aibadge sim" id="ai-tier-badge">🤖 Simulated</span></div>
+    <div class="hint" id="ai-tier-hint">Offline mode: NPCs run on the built-in personality engine. Enable AI in Settings for LLM-written lines.</div>
+  </div>
+  <button class="btn gold" id="btn-start-verse">SUMMON THE CAST ⚡</button>
+  <button class="btn ghost" id="btn-back-splash">← Back</button>
+</section>
+
+<!-- CAST REVIEW -->
+<section id="screen-cast" class="screen">
+  <h2 class="st">🎭 The cast has assembled</h2>
+  <div class="hint" id="cast-sub">12 influencers. One crown. <b style="color:var(--neon-pink)">@kai_storm</b> starts at #1 — dethrone them.</div>
+  <div class="castscroll" id="cast-grid"></div>
+  <div class="card"><div class="hint">👑 = current #1 (your rival) · tap any card for their vibe · relationships already simmer…</div></div>
+  <button class="btn gold" id="btn-enter-verse">ENTER THE VERSE ⚡</button>
+  <button class="btn ghost" id="btn-back-uni">← Change universe</button>
+</section>
+
+<!-- GAME -->
+<section id="screen-game" class="screen" style="padding-top:0">
+  <div class="hud">
+    <span class="stat">📅 Day <b id="hdr-day">1</b></span>
+    <span class="stat">👥 <b id="hdr-followers">0</b></span>
+    <span class="stat">🏆 #<b id="hdr-rank">–</b></span>
+    <span class="stat">💜 <b id="hdr-rep">50</b></span>
+    <span class="stat" id="hdr-scandal-wrap">🚨 <b id="hdr-scandal">0</b></span>
+    <span class="vn-tag" style="margin-left:auto">VN</span>
+  </div>
+  <div class="tickerwrap"><div class="ticker" id="ticker">⚡ Welcome to the Verse ⚡ Post. Go viral. Survive the drama. ⚡</div></div>
+  <div id="drama-banner"></div>
+
+  <div id="panel-feed" class="tabpanel active">
+    <div id="feed-list"></div>
+    <button class="btn" id="btn-next-day" style="margin-top:14px">⏭ NEXT DAY</button>
+  </div>
+  <div id="panel-ranks" class="tabpanel">
+    <h2 class="st">🏆 Leaderboard</h2>
+    <div id="ranks-list"></div>
+    <div class="hint">Win by reaching <b>#1</b>. The crowned rival grows every day — don't stall.</div>
+  </div>
+  <div id="panel-verse" class="tabpanel">
+    <h2 class="st">🌌 The Verse</h2>
+    <div class="npcgrid" id="verse-grid"></div>
+  </div>
+  <div id="panel-more" class="tabpanel">
+    <h2 class="st">⚙️ Settings</h2>
+    <div class="card">
+      <div class="kv"><span>AI voice tier</span><span class="aibadge sim" id="ai-tier-badge2">🤖 Simulated</span></div>
+      <div class="setrow"><span>🤖 Puter.js AI (free, no key)</span><button class="btn small cyan" id="btn-ai-puter">Enable</button></div>
+      <div class="hint">Puter opens a one-time consent popup, then NPCs get LLM-written lines. Fully optional — the game is complete without it.</div>
+      <label class="lbl">Groq API key (free, optional)</label>
+      <input type="text" id="inp-groq-key" placeholder="gsk_…" autocomplete="off">
+      <label class="lbl">Gemini API key (free, optional)</label>
+      <input type="text" id="inp-gemini-key" placeholder="AIza…" autocomplete="off">
+      <button class="btn small cyan" id="btn-save-keys">💾 Save keys</button>
+      <div class="setrow"><span>🔊 Sound FX</span><div class="switch on" id="tgl-sfx"></div></div>
+      <div class="setrow"><span>✨ Visual FX</span><div class="switch on" id="tgl-vfx"></div></div>
+      <div class="setrow"><span>💾 Save game</span><button class="btn small cyan" id="btn-save-now">Save</button></div>
+      <div class="setrow"><span>🗑 Reset run</span><button class="btn small ghost" id="btn-reset-save">Reset</button></div>
+      <div class="hint" style="margin-top:10px">Powered by Puter.js when AI is enabled · <a href="https://developer.puter.com" style="color:var(--neon-cyan)">developer.puter.com</a></div>
+    </div>
+    <div class="card">
+      <h2 class="st" style="margin-top:0">❓ How to play</h2>
+      <div class="hint">📝 Post takes, rumors, photos, callouts, collabs & polls.<br>📈 Engagement → followers. Hit <b>#1</b> to win.<br>🚨 Scandals build strikes — 3 strikes or 0 reputation = <b>canceled</b>.<br>🗓️ Rivals post daily and escalate when you crack the top 3.<br>🤝 Befriend NPCs for collabs; feuds are fame fuel but risky.</div>
+    </div>
+  </div>
+
+  <nav class="tabs">
+    <button class="tab active" id="tab-feed"><span class="ico">📰</span>Feed</button>
+    <button class="tab" id="tab-ranks"><span class="ico">🏆</span>Ranks</button>
+    <button class="tab" id="tab-verse"><span class="ico">🌌</span>Verse</button>
+    <button class="tab" id="tab-more"><span class="ico">⚙️</span>More</button>
+  </nav>
+</section>
+
+<button class="btn gold" id="btn-compose" style="position:fixed;bottom:76px;right:16px;width:64px;height:64px;border-radius:50%;font-size:28px;padding:0;z-index:70;display:none;margin:0">✍️</button>
+
+<!-- COMPOSE MODAL -->
+<div class="modal" id="modal-compose">
+  <div class="sheet">
+    <h2 class="st" style="margin-top:0">✍️ New post</h2>
+    <div class="typegrid" id="compose-types"></div>
+    <textarea id="compose-text" placeholder="Drop your take…" maxlength="280"></textarea>
+    <div id="compose-target-wrap" style="display:none">
+      <label class="lbl">Target</label>
+      <select id="compose-target"></select>
+    </div>
+    <label class="lbl">Spice forecast</label>
+    <div class="meter"><div id="spice-meter" style="width:20%"></div></div>
+    <button class="btn" id="btn-send-post">🚀 POST IT</button>
+    <button class="btn ghost" id="btn-close-compose">Cancel</button>
+  </div>
+</div>
+
+<!-- NPC PROFILE MODAL -->
+<div class="modal" id="modal-npc">
+  <div class="sheet">
+    <div class="center"><div class="avatar" id="npcp-avatar" style="width:72px;height:72px;font-size:36px;margin:0 auto">🙂</div>
+    <h2 class="st" id="npcp-name">—</h2><div class="hint" id="npcp-handle">—</div></div>
+    <div class="kv"><span>Followers</span><b id="npcp-followers">0</b></div>
+    <div class="kv"><span>Faction</span><b id="npcp-faction">—</b></div>
+    <div class="kv"><span>Vibe</span><b id="npcp-vibe">—</b></div>
+    <div class="kv"><span>Relationship with you</span></div>
+    <div class="relbar"><div id="npcp-rel" style="width:50%;background:var(--neon-cyan)"></div></div>
+    <div class="hint" id="npcp-memory" style="margin-top:10px"></div>
+    <button class="btn small cyan" id="btn-npc-follow">🤝 Follow</button>
+    <button class="btn ghost" id="btn-npc-close">Close</button>
+  </div>
+</div>
+
+<!-- GAME OVER -->
+<section id="screen-gameover" class="screen">
+  <div class="center" style="margin-top:10vh">
+    <div class="big-emoji" id="go-emoji">👑</div>
+    <h2 class="st" id="go-title" style="font-size:30px">YOU DID IT</h2>
+    <div class="tagline" id="go-sub"></div>
+    <div class="card" id="go-stats"></div>
+    <button class="btn gold" id="btn-restart">🔄 NEW RUN</button>
+  </div>
+  <div class="footer"><span class="vn-tag">VN</span> · Influencer-Verse</div>
+</section>
+
+<div id="toast"></div>
+
+<script type="module">
+/* =====================================================================
+   VN INFLUENCER-VERSE — single-file game
+   Sim-first: deterministic sim owns ALL game state. LLM only renders wording.
+   ===================================================================== */
+'use strict';
+
+// ---------- utils ----------
+const $ = id => document.getElementById(id);
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtN = n => n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n >= 1e3 ? (n/1e3).toFixed(1)+'K' : String(Math.floor(n));
+let _uid = 1; const uid = () => 'x' + (_uid++) + Date.now().toString(36);
+function mulberry(seed){ let t = seed >>> 0; return function(){ t += 0x6D2B79F5; let r = Math.imul(t ^ t >>> 15, 1 | t); r ^= r + Math.imul(r ^ r >>> 7, 61 | r); return ((r ^ r >>> 14) >>> 0) / 4294967296; }; }
+const pick = (rng, arr) => arr[Math.floor(rng() * arr.length)];
+function toast(msg, ms=2200){ const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove('show'), ms); }
+function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); $(id).classList.add('active'); window.scrollTo(0,0); }
+
+// ---------- SFX (WebAudio synth, no files) ----------
+const SFX = {
+  ctx:null, enabled:true,
+  ac(){ if(!this.ctx){ const AC = window.AudioContext||window.webkitAudioContext; if(!AC) return null; this.ctx = new AC(); } if(this.ctx.state==='suspended') this.ctx.resume(); return this.ctx; },
+  tone(f, d=0.12, type='sine', vol=0.18, slide=0, delay=0){
+    if(!this.enabled) return; const c = this.ac(); if(!c) return;
+    const t = c.currentTime + delay, o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t);
+    if(slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f+slide), t+d);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t+0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+d);
+    o.connect(g).connect(c.destination); o.start(t); o.stop(t+d+0.05);
+  },
+  click(){ this.tone(660, .06, 'square', .07); },
+  post(){ this.tone(420, .14, 'sine', .16, 380); this.tone(840, .1, 'sine', .1, 0, .05); },
+  like(){ this.tone(880, .07, 'sine', .12, 220); },
+  repost(){ this.tone(520, .1, 'triangle', .12, -260); },
+  viral(){ [523,659,784,1047,1319].forEach((f,i)=>this.tone(f,.22,'triangle',.16,0,i*.07)); },
+  trend(){ [392,523,659].forEach((f,i)=>this.tone(f,.16,'sawtooth',.08,0,i*.06)); },
+  drama(){ this.tone(110, .4, 'sawtooth', .2, -40); this.tone(116, .4, 'square', .1, -30, .05); },
+  scandal(){ this.tone(220, .25, 'square', .16, -140); this.tone(180, .3, 'square', .14, -100, .12); },
+  milestone(){ [784,988,1175].forEach((f,i)=>this.tone(f,.18,'sine',.14,0,i*.08)); },
+  win(){ [523,659,784,1047,784,1047,1319,1568].forEach((f,i)=>this.tone(f,.25,'triangle',.18,0,i*.11)); },
+  lose(){ [400,340,280,200,140].forEach((f,i)=>this.tone(f,.3,'sawtooth',.14,-40,i*.13)); },
+  day(){ this.tone(740, .12, 'sine', .1); this.tone(980, .14, 'sine', .08, 0, .09); },
+  type(){ this.tone(1200+Math.random()*600, .03, 'square', .03); }
+};
+
+// ---------- VFX (canvas particles) ----------
+const VFX = {
+  cv:null, cx:null, parts:[], raf:null, enabled:true, started:false,
+  init(){ this.cv = $('vfx'); this.cx = this.cv.getContext('2d'); this.size(); window.addEventListener('resize', ()=>this.size()); },
+  size(){ this.cv.width = innerWidth; this.cv.height = innerHeight; },
+  start(){ if(this.started) return; this.started = true; const loop = ()=>{ this.step(); this.raf = requestAnimationFrame(loop); }; loop(); },
+  spawn(o){ if(!this.enabled) return; if(this.parts.length > 350) this.parts.splice(0, 60); this.parts.push(Object.assign({x:innerWidth/2,y:innerHeight/2,vx:0,vy:0,life:60,age:0,size:4,color:'#ff2fb3',grav:0.05,shape:'c'}, o)); },
+  burst(x,y,n=40,colors){ for(let i=0;i<n;i++){ const a = Math.random()*Math.PI*2, s = 2+Math.random()*6;
+    this.spawn({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-2,life:50+Math.random()*40,size:3+Math.random()*4,color:colors?colors[i%colors.length]:['#ff2fb3','#22e6ff','#a6ff3f','#ffd23f'][i%4]}); } },
+  confetti(n=120){ for(let i=0;i<n;i++) this.spawn({x:Math.random()*innerWidth,y:-10,vy:2+Math.random()*3,vx:(Math.random()-.5)*2,life:140,size:4+Math.random()*5,color:['#ff2fb3','#22e6ff','#a6ff3f','#ffd23f','#9b5bff'][i%5],grav:0.03,shape:'r'}); },
+  embers(n=40){ for(let i=0;i<n;i++) this.spawn({x:Math.random()*innerWidth,y:innerHeight+10,vy:-(1+Math.random()*2),vx:(Math.random()-.5),life:120,size:2+Math.random()*3,color:['#ff5f2f','#ff9d3f','#ff4d5e'][i%3],grav:-0.01}); },
+  floater(x,y,text,color='#ffd23f'){ if(!this.enabled) return; this.spawn({x,y,vy:-1.6,vx:0,life:70,size:15,color,text,shape:'t',grav:0}); },
+  step(){ const c = this.cx; c.clearRect(0,0,this.cv.width,this.cv.height);
+    this.parts = this.parts.filter(p=>p.age<p.life);
+    for(const p of this.parts){ p.age++; p.x+=p.vx; p.y+=p.vy; p.vy+=p.grav; p.vx*=0.985;
+      const a = 1 - p.age/p.life; c.globalAlpha = Math.max(0,a);
+      if(p.shape==='t'){ c.fillStyle=p.color; c.font='900 '+p.size+'px sans-serif'; c.textAlign='center'; c.fillText(p.text,p.x,p.y); }
+      else if(p.shape==='r'){ c.fillStyle=p.color; c.save(); c.translate(p.x,p.y); c.rotate(p.age/12); c.fillRect(-p.size/2,-p.size/4,p.size,p.size/2); c.restore(); }
+      else { c.fillStyle=p.color; c.beginPath(); c.arc(p.x,p.y,p.size*(1-p.age/p.life*0.5),0,7); c.fill(); } }
+    c.globalAlpha = 1; }
+};
+
+// ---------- curated parody universe packs (IP-safe: 100% original names) ----------
+function N(name, handle, arch, spice, loyalty, chaos, clout, faction, voice, bio, emoji, followers, seed){
+  return {name, handle, arch, spice, loyalty, chaos, clout, faction, voice, bio, emoji, followers, seed};
+}
+const UNIVERSES = [
+{ id:'shinobi', name:'Neon Shinobi Realm', tag:'ninja clans · jutsu · rival villages', emoji:'🥷',
+  aliases:['naruto','shinobi','ninja','boruto'],
+  c1:'#ff2fb3', c2:'#9b5bff',
+  npcs:[
+    N('Kai Stormblade','@kai_storm','rival',.9,.3,.5,.95,'Storm Clan','spicy','Prodigy of the Storm. Undefeated. Unbothered. 👑','⚡',98200,11),
+    N('Mira Moonwhisper','@mira_moon','wholesome',.25,.95,.15,.6,'Moon Sect','wholesome','Healer • tea enjoyer • will compliment your form','🌙',34100,22),
+    N('Rook Ironfist','@rook_iron','menace',.85,.4,.9,.55,'Iron Syndicate','menace','Menace. Do not @ me unless you can take a punch.','🥊',28700,33),
+    N('Zara Swiftstrike','@zara_swift','analyst',.5,.7,.3,.65,'Storm Clan','formal','Breaking down every clan war with charts. You\'re welcome.','📊',41200,44),
+    N('Old Master Fen','@master_fen','sage',.15,.9,.1,.7,'Moon Sect','formal','40 years a shinobi. I have seen every mistake you are about to make.','🧙',52800,55),
+    N('Pip Quickfoot','@pip_quick','gremlin',.7,.6,.95,.5,'Ronin','chaos','Professional chaos gremlin. Speed: yes.','💨',19800,66),
+    N('Sable Nightbane','@sable_night','edgy',.6,.35,.6,.58,'Ronin','cryptic','The night hides many things. Mostly me.','🌑',26400,77),
+    N('Captain Yara','@yara_captain','loyalist',.45,.95,.25,.52,'Storm Clan','formal','Storm Clan captain. Loyalty is my whole personality.','🛡️',23100,88),
+    N('Juno Brightleaf','@juno_bright','wholesome',.3,.85,.2,.48,'Moon Sect','wholesome','Sunshine with kunai. Let\'s be friends!!','🌸',27600,99),
+    N('Koda Emberlyn','@koda_ember','hothead',.8,.5,.7,.57,'Iron Syndicate','spicy','If you\'re not first, you\'re last. FIGHT ME.','🔥',31900,110),
+    N('The Masked Ronin','@masked_ronin','mystery',.55,.3,.5,.62,'Ronin','cryptic','No clan. No master. No posts before noon.','🎭',35700,121),
+    N('Tinker Bellows','@tinker_b','inventor',.4,.75,.45,.44,'Iron Syndicate','formal','I put gadgets on everything. You\'re welcome / sorry.','⚙️',18200,132),
+  ],
+  rels:[['@kai_storm','@rook_iron',-60],['@kai_storm','@mira_moon',30],['@mira_moon','@juno_bright',70],['@rook_iron','@koda_ember',55],['@zara_swift','@master_fen',40],['@sable_night','@masked_ronin',45],['@pip_quick','@juno_bright',50],['@yara_captain','@kai_storm',65],['@tinker_b','@koda_ember',-20],['@kai_storm','@masked_ronin',-40]],
+  flavor:['jutsu','chakra','clan war','tournament arc','shadow clones','ramen stand','Hokage-tier','training arc']
+},
+{ id:'starfall', name:'Starfall Academy', tag:'wizard school · houses · ancient magic', emoji:'🪄',
+  aliases:['harry potter','hogwarts','wizard','witch','magic school'],
+  c1:'#9b5bff', c2:'#22e6ff',
+  npcs:[
+    N('Drax Nightshade','@drax_night','rival',.9,.25,.55,.95,'Thorn House','spicy','Top of every class. Naturally. Bow. 👑','🐍',96500,211),
+    N('Luna Spellweaver','@luna_spell','wholesome',.25,.95,.15,.62,'Star House','wholesome','Stargazer • potion pal • your #1 supporter','⭐',34800,222),
+    N('Professor Alder','@prof_alder','sage',.15,.9,.1,.72,'Staff','formal','Transfiguration professor. Detention is a love language.','📜',54100,233),
+    N('Nixie Bubblebrook','@nixie_bub','gremlin',.7,.6,.95,.5,'Tide House','chaos','Flooded the east wing AGAIN. Worth it.','🫧',20500,244),
+    N('Bram Ironwood','@bram_iron','loyalist',.45,.95,.25,.54,'Ember House','formal','Quidditch-ish captain. House pride forever.','🔥',24900,255),
+    N('Seraphina Quill','@sera_quill','analyst',.5,.7,.3,.66,'Star House','formal','School paper editor. I print the truth, weekly.','📰',42800,266),
+    N('Mortimer Grimm','@mort_grimm','edgy',.6,.35,.6,.57,'Thorn House','cryptic','The dungeons understand me.','🦇',27100,277),
+    N('Poppy Sunbeam','@poppy_sun','wholesome',.3,.85,.2,.5,'Star House','wholesome','Herbology bestie!! Plants > people (except you)','🌻',28300,288),
+    N('Felix Charmsworth','@felix_charm','clout',.65,.4,.5,.7,'Ember House','spicy','Charms prodigy. 10k followers before breakfast.','✨',39200,299),
+    N('Wren Shadowmend','@wren_shadow','mystery',.55,.3,.5,.6,'Unaffiliated','cryptic','Transfer student. Don\'t ask from where.','🌒',33400,310),
+    N('Headmistress Vela','@head_vela','authority',.2,.85,.1,.75,'Staff','formal','Headmistress. My office. Now. (affectionate)','🎓',58700,321),
+    N('Otto Copperpot','@otto_copper','inventor',.4,.75,.45,.46,'Tide House','formal','Enchanted 47 toasters. 3 exploded. Progress.','🔮',17900,332),
+  ],
+  rels:[['@drax_night','@felix_charm',-55],['@drax_night','@mort_grimm',40],['@luna_spell','@poppy_sun',70],['@sera_quill','@drax_night',-35],['@bram_iron','@felix_charm',50],['@wren_shadow','@mort_grimm',45],['@nixie_bub','@poppy_sun',55],['@prof_alder','@head_vela',60],['@otto_copper','@nixie_bub',-25],['@drax_night','@luna_spell',-30]],
+  flavor:['potion spill','enchanted ceiling','house cup','forbidden corridor','wand malfunction','midnight duel','floo network','exam season']
+},
+{ id:'brawl', name:'Turbo Brawl Saga', tag:'martial arts · dojos · world tournament', emoji:'🥋',
+  aliases:['dragon ball','goku','martial arts','tournament','street fighter'],
+  c1:'#ff9d3f', c2:'#ff2fb3',
+  npcs:[
+    N('Kenji Stormfist','@kenji_storm','rival',.9,.3,.5,.95,'Tiger Dojo','spicy','Reigning World Tournament champ. Come take it. 👑','🏆',99800,411),
+    N('Vera Ironkick','@vera_iron','hothead',.8,.5,.7,.6,'Crane Dojo','spicy','Kicked through a brick wall this morning. Warm-up.','🦵',33600,422),
+    N('Master Bao','@master_bao','sage',.15,.9,.1,.72,'Crane Dojo','formal','A punch thrown in anger always misses its mark.','🐼',55900,433),
+    N('Chico Lightning','@chico_bolt','gremlin',.7,.6,.95,.52,'Lone Wolves','chaos','Fastest mouth in the West bracket.','⚡',21400,444),
+    N('Anya Wolf Fang','@anya_wolf','edgy',.6,.35,.6,.58,'Lone Wolves','cryptic','I fight alone. The pack slows me down.','🐺',29200,455),
+    N('Dmitri Stonewall','@dmitri_stone','stoic',.3,.8,.2,.55,'Serpent Dojo','formal','I have never been knocked down. Statistically.','🪨',26800,466),
+    N('Lily Petalstrike','@lily_petal','wholesome',.3,.85,.2,.5,'Crane Dojo','wholesome','Flower fist technique!! Smell the roses (then nap)','🌺',29700,477),
+    N('Rex Cannonball','@rex_cannon','brawler',.75,.45,.65,.56,'Tiger Dojo','spicy','LOUD NOISES. BIG HITS. NO REGRETS.','💥',31500,488),
+    N('Sage Quickhands','@sage_quick','analyst',.5,.7,.3,.64,'Unaffiliated','formal','Commentator. I have opinions about your footwork.','🎙️',44100,499),
+    N('Yuki Frostpalm','@yuki_frost','prodigy',.55,.6,.3,.66,'Serpent Dojo','cryptic','Ice-cold. Undefeated in winter. Coincidence?','❄️',36800,510),
+    N('Bruno Bullrush','@bruno_bull','menace',.85,.35,.8,.54,'Tiger Dojo','menace','Heel of the league. Boo me, I dare you.','🐂',27900,521),
+    N('Pippa Sparrow','@pippa_spar','rookie',.45,.8,.5,.47,'Crane Dojo','wholesome','Rookie of the year!! Thanks for believing!!','🐦',24300,532),
+  ],
+  rels:[['@kenji_storm','@bruno_bull',45],['@kenji_storm','@yuki_frost',-50],['@vera_iron','@lily_petal',60],['@rex_cannon','@bruno_bull',55],['@anya_wolf','@chico_bolt',-30],['@sage_quick','@kenji_storm',35],['@dmitri_stone','@yuki_frost',40],['@pippa_spar','@lily_petal',65],['@bruno_bull','@vera_iron',-45],['@master_bao','@pippa_spar',50]],
+  flavor:['power level','tournament bracket','dojo raid','training montage','energy blast','weight room','grudge match','comeback arc']
+}
+];
+function findPack(text){
+  const t = (text||'').toLowerCase();
+  for(const u of UNIVERSES){ if(u.name.toLowerCase()===t) return u;
+    if(u.aliases.some(a=>t.includes(a))) return u; }
+  return null;
+}
+const CROSSOVER_RE = /(\bx\b|\bvs\b|\bversus\b|mashup|crossover)/i;
+
+// ---------- game state ----------
+const G = {
+  universe:null, npcs:[], player:null, posts:[], rumors:[], day:1,
+  feuds:[], ticker:[], over:null, rival:null, seed:1, rng:Math.random,
+  rel:{}, stats:{posts:0, viral:0, feudsWon:0, collabs:0},
+  composeType:'take',
+};
+function relGet(a,b){ return G.rel[a+'>'+b] ?? 0; }
+function relAdd(a,b,d){ const k=a+'>'+b; G.rel[k]=clamp((G.rel[k]??0)+d,-100,100); }
+function npcByHandle(h){ return G.npcs.find(n=>n.handle===h); }
+function avatarHTML(npc, size){ const h = npc.seed % 360;
+  return `<div class="avatar" style="width:${size||44}px;height:${size||44}px;flex-basis:${size||44}px;background:linear-gradient(135deg,hsl(${h},80%,55%),hsl(${(h+60)%360},80%,45%))">${npc.emoji}</div>`; }
+
+function newGame(universeDef, handle, arch){
+  G.universe = universeDef; G.day = 1; G.posts = []; G.rumors = []; G.feuds = [];
+  G.over = null; G.rel = {}; G.stats = {posts:0, viral:0, feudsWon:0, collabs:0};
+  G.seed = (Math.random()*1e9)|0; G.rng = mulberry(G.seed);
+  G.npcs = universeDef.npcs.map(d => Object.assign({}, d, {
+    followers: d.followers, mood:'chill', mem:[], said:[], cd:{}, following:false, isRival:false, traits:{spice:d.spice, loyalty:d.loyalty, chaos:d.chaos, clout:d.clout}
+  }));
+  for(const [a,b,v] of universeDef.rels){ relAdd(a,b,v); relAdd(b,a,v); }
+  const rival = [...G.npcs].sort((a,b)=>b.followers-a.followers)[0];
+  rival.isRival = true; G.rival = rival;
+  const archBonus = {gremlin:{spice:.15}, wholesome:{cred:.15}, analyst:{cred:.2}, menace:{spice:.1}}[arch]||{};
+  G.player = { name: handle.replace(/^@/,'')||'rookie', handle: handle.startsWith('@')?handle:'@'+handle,
+    arch, followers: 120, rep: 50, credibility: 50, strikes: 0, spiceBonus: archBonus.spice||0, credBonus: archBonus.cred||0,
+    emoji:'😎', seed: 7 };
+  // seed the feed with a couple of NPC posts so day 1 isn't empty
+  for(let i=0;i<3;i++){ const n = G.npcs[(G.rng()*G.npcs.length)|0]; npcAmbientPost(n, true); }
+  pushTicker(`⚡ ${esc(universeDef.name)} is LIVE — ${esc(rival.name)} holds the crown at ${fmtN(rival.followers)} followers. Dethrone them.`);
+  save();
+}
+
+const PTYPES = {
+  take:   {name:'🔥 Hot Take', emoji:'🔥', spice:.8,  risk:.55, cred:0,   reach:1.0,  target:false},
+  rumor:  {name:'👂 Rumor',    emoji:'👂', spice:.7,  risk:.8,  cred:-4,  reach:1.25, target:false},
+  photo:  {name:'📸 Photo',    emoji:'📸', spice:.3,  risk:.12, cred:2,   reach:.9,   target:false},
+  callout:{name:'🎯 Callout',  emoji:'🎯', spice:.95, risk:.9,  cred:-2,  reach:1.1,  target:true},
+  collab: {name:'🤝 Collab',   emoji:'🤝', spice:.4,  risk:.3,  cred:3,   reach:1.15, target:true},
+  poll:   {name:'📊 Poll',     emoji:'📊', spice:.35, risk:.15, cred:1,   reach:1.0,  target:false},
+};
+const PHOTO_ART = ['🌅🥷✨','🔥🐉🔥','🌙⚔️🌙','💥👊💥','🍜😋🍜','🏯🌸🏯','⚡🌀⚡','🌊🐬🌊'];
+
+// ---------- template banks (sim-mode renderer: LLM only ever re-words these intents) ----------
+const LINES = {
+  support:{ spicy:['This is the coldest take I\'ve seen all week. Respect. 🔥','Say it LOUDER. {t} and I\'m here for it.','Finally someone with a spine.'],
+    wholesome:['This is so lovely!! Supporting this with my whole heart 💜','Yes!! Love this energy so much 🌸','You always know just what to say 🥺'],
+    formal:['A well-reasoned position. I concur.','Noted and agreed. The data supports this.','An astute observation.'],
+    menace:['Heh. You\'re alright, kid. Don\'t make me regret this.','Fine. You get a pass. This once.','Not bad. Keep that energy.'],
+    chaos:['LMAOOO YES?? {t} supremacy!!','I\'m printing this on a shirt','WILD but true??'],
+    cryptic:['The winds agree with you.','Interesting… the signs pointed here.','Noted by those who watch.'] },
+  attack:{ spicy:['Ratio + you fell off. Embarrassing. 💀','This is the worst take in the Verse and it\'s not close.','Delete this before I frame it.'],
+    wholesome:['Oh no… I don\'t think I agree, friend 🥺','This feels a bit harsh? Maybe reconsider?','I believe in you but not this take 💜'],
+    formal:['I must respectfully dismantle this.','Factually incorrect. See my thread.','A disappointing lapse in judgment.'],
+    menace:['Watch your mouth before I watch it for you.','You got 24 hours to delete this.','Cute. Wrong, but cute.'],
+    chaos:['BOOOO 🍅🍅🍅','imagine being wrong this confidently','this is giving… clown behavior'],
+    cryptic:['The shadows whisper otherwise.','You walk a dark path with this one.','History will not be kind to this take.'] },
+  mock:{ spicy:['lol. lmao, even.','"Source: trust me bro" energy','Imagine posting this unironically 💀'],
+    wholesome:['Hmm, I\'m not sure about this one haha','Bless your heart 😅','Maybe sleep on this one?'],
+    formal:['Curious. Incorrect, but curious.','I have archived this for future study.','A bold strategy. Let\'s see if it pays off.'],
+    menace:['Aww, the rookie has opinions. Adorable.','Come back when you\'ve won something.','That\'s cute.'],
+    chaos:['💀💀💀','SIR this is a Wendy\'s','ratio incoming in 3…2…'],
+    cryptic:['The mirror cracks at such words.','Even the void cringed.','Prophecy did not foresee… this.'] },
+  rumor_spread:{ spicy:['YO did you hear?? {t} 👀','SPREADING THIS because WHAT. {t}','no way. NO WAY. {t}'],
+    wholesome:['Omg have you heard?? {t} 🥺','Not sure if true but… {t}!!','Eek, {t}?!'],
+    formal:['Unverified reports indicate: {t}','Sources suggest {t}. Developing.','Rumor mill: {t}'],
+    menace:['Word on the street: {t}. Watch yourself.','Heard {t}. Interesting…','{t}. Remember who told you first.'],
+    chaos:['🚨🚨 {t} 🚨🚨','STOP EVERYTHING. {t}','this can\'t be real. {t}?!?!'],
+    cryptic:['The whispers say: {t}','Shadows carry tales of {t}','It is said… {t}'] },
+  debunk:{ spicy:['FAKE. {t} is cap, I checked. 💀','Debunked in 4K. Sit down.','Myth: busted.'],
+    wholesome:['Hmm, I looked into it and {t} doesn\'t seem right 🥺','Let\'s not spread unconfirmed stuff, friends 💜','Fact-check says no on this one!'],
+    formal:['Correction: {t} is unsubstantiated.','I must issue a correction regarding {t}.','The claim "{t}" lacks evidence.'],
+    menace:['{t}? Lies. Try harder next time.','Whoever started "{t}" is getting folded.','False. And I never miss.'],
+    chaos:['LMAO debunked already?? {t} is FAKE','press F for this rumor 💀','{t}… sure jan'],
+    cryptic:['The truth rejects this tale.','{t} dissolves in daylight.','The signs deny it.'] },
+  feud:{ spicy:['Oh it\'s ON. {t}, you\'re done. 🥊','You wanted smoke? You got FIRE.','Meet me in the replies. Bring friends. You\'ll need them.'],
+    menace:['{t}. You crossed the line. There is no going back.','Consider this your final warning. There won\'t be another.','You picked the wrong fight.'],
+    formal:['I am formally declaring a rivalry with {t}.','Let the record show: {t} started this.','A feud, then. May the best poster win.'],
+    chaos:['IT\'S BEEF O\'CLOCK 🥩 {t} vs ME','ohhhh we doing this?? BET','grabs popcorn'],
+    wholesome:['I don\'t like fighting but {t} left me no choice 🥺','This hurts me more than it hurts you…'],
+    cryptic:['The stars align for war. {t}.','Darkness gathers between us, {t}.'] },
+  defend:{ wholesome:['Hey!! Be nice to them 🥺💜','They didn\'t deserve that…','I\'m standing by my friend here!'],
+    spicy:['Y\'all are weird for piling on. Touch grass.','Imagine jumping someone for a post. L behavior.','Back off. They\'re with me.'],
+    formal:['I vouch for their character. This pile-on is unjust.','The criticism is disproportionate.','I stand with them, on record.'],
+    menace:['Anyone else got something to say? Didn\'t think so.','Touch them and you deal with me.','Back. Off.'],
+    chaos:['LEAVE THEM ALONE challenge (impossible)','white knight arc LET\'S GO','plot armor activated 🛡️'],
+    cryptic:['The accused walks in light.','I have seen their heart. It is true.'] },
+  collab_ask:{ wholesome:['Would you wanna collab sometime?? 🥺','Your vibe + my vibe = unstoppable!!','Collab?? Please??'],
+    spicy:['We\'d break the Verse. You in? 🔥','Link up. Let\'s make history.','You + me. Numbers go brrr.'],
+    formal:['I propose a collaboration, terms to be discussed.','A joint venture would benefit us both.','Shall we collaborate?'],
+    menace:['Work with me. It\'s not a request.','Collab. Don\'t make me ask twice.','You need me. Admit it.'],
+    chaos:['COLLAB COLLAB COLLAB','duo arc incoming??','we NEED to make something unhinged'],
+    cryptic:['Our paths converge. Shall we walk together?','The fates suggest… a partnership.'] },
+  poll_q:['Who\'s winning the Verse right now? 🤔','Best faction? No wrong answers (there are).','Pineapple on pizza: hero or villain?','Who should I feud with next? 👀','Rate my last take 1-10'],
+};
+function renderLine(kind, npc, slots){
+  const bank = LINES[kind] && (LINES[kind][npc.voice] || LINES[kind].spicy);
+  let t = pick(G.rng, bank);
+  for(const k in (slots||{})) t = t.replace('{'+k+'}', slots[k]);
+  return t;
+}
+
+// ---------- engagement ----------
+function postScore(post){
+  const pt = PTYPES[post.type];
+  const timing = 0.8 + G.rng()*0.4;
+  const spice = pt.spice + (post.author==='player' ? (G.player.spiceBonus||0) : 0);
+  const cred = post.author==='player' ? (G.player.credibility/100) : 0.7;
+  return {score: post.reach * timing * (0.5+spice) * (0.5+cred) * pt.reach, spice};
+}
+function addPost(author, type, text, opts={}){
+  const pt = PTYPES[type];
+  const post = { id: uid(), author, type, text, target: opts.target||null,
+    day: G.day, ts: Date.now(), likes:0, reposts:0, comments:[],
+    reach: opts.reach || (author==='player' ? G.player.followers*0.6 : (npcByHandle(author)?.followers||1000)*0.4),
+    trending:false, heat: pt.spice, photo: type==='photo' ? pick(G.rng, PHOTO_ART) : null };
+  G.posts.unshift(post); if(G.posts.length>70) G.posts.pop();
+  return post;
+}
+// NPC reacts to a post — utility AI picks action, sim decides everything
+function npcReact(npc, post, instant=false){
+  if(G.over) return;
+  const isPlayer = post.author==='player';
+  const authorH = isPlayer ? G.player.handle : post.author;
+  const namedMe = post.text.toLowerCase().includes(npc.handle.toLowerCase()) || post.target===npc.handle;
+  const relV = relGet(npc.handle, authorH)/100;
+  const trending = post.trending ? .25 : 0;
+  const salience = clamp(.12 + (namedMe?.55:0) + Math.abs(relV)*.25 + trending + npc.clout*.1 + npc.chaos*.08, 0, .95);
+  if(G.rng() > salience) return; // ignoring boring posts is what makes attention earned
+  const doIt = () => {
+    if(G.over) return;
+    // utility scores
+    const likeU = .5 + relV*.4 + npc.loyalty*.2;
+    const comU = .3 + Math.abs(relV)*.4 + npc.spice*.3 + (namedMe?.4:0);
+    const repU = .15 + post.heat*.3 + npc.clout*.3 + (relV>0?.25:0);
+    const r = G.rng();
+    if(r < repU*.5){ // repost / quote
+      post.reposts++; post.reach += npc.followers*.25;
+      SFX.repost();
+      const stance = relV >= 0 ? 'support' : (npc.spice>.6?'mock':'attack');
+      const fb = '🔁 ' + renderLine(stance, npc, {t: post.text.slice(0,60)});
+      npcSay(npc, 'quote-post', `quote-posting: "${post.text.slice(0,120)}". Stance: ${stance}.`, fb, post);
+    } else if(r < comU){
+      const stance = relV > .25 ? 'support' : relV < -.25 ? (npc.spice>.55?'attack':'mock') : (namedMe ? 'mock' : 'support');
+      const fb = renderLine(stance, npc, {t: post.text.slice(0,60)});
+      npcSay(npc, 'comment', `commenting on: "${post.text.slice(0,120)}". Stance: ${stance}${namedMe?' (you were named)':''}.`, fb, post);
+      if(stance==='attack' && isPlayer){ relAdd(npc.handle, G.player.handle, -8); G.player.rep = clamp(G.player.rep-2,0,100); }
+      if(stance==='support' && isPlayer){ relAdd(npc.handle, G.player.handle, 5); }
+    } else if(r < likeU + comU){
+      const w = 1 + Math.floor(npc.followers/4000 * npc.clout);
+      post.likes += w;
+    }
+    // rumor spreaders
+    if(post.type==='rumor' && G.rng() < .4 + npc.chaos*.3) spreadRumor(post, npc);
+    renderFeed();
+  };
+  if(instant) doIt();
+  else { showTyping(npc); setTimeout(doIt, 500 + G.rng()*1400); }
+}
+// NPC says something: sim template sync, or LLM-worded when an AI tier is on.
+// The sim ALWAYS chose the intent (kind/stance) — the LLM only re-words it.
+function npcSay(npc, kind, ctx, fallback, post){
+  if(AI.tier==='sim'){ addComment(post, npc, fallback); return; }
+  AI.wording(npc, kind, ctx, fallback).then(line=>{ addComment(post, npc, line); renderFeed(); });
+}
+function addComment(post, npc, text){
+  post.comments.push({by:npc.handle, emoji:npc.emoji, seed:npc.seed, text});
+  if(post.comments.length>12) post.comments.shift();
+  npc.said.push(text.slice(0,40)); if(npc.said.length>14) npc.said.shift();
+}
+function showTyping(npc){
+  const f = $('feed-list'); if(!f) return;
+  const d = document.createElement('div'); d.className='typing'; d.id='typing-'+npc.handle;
+  d.textContent = `💬 ${npc.handle} is typing…`; f.prepend(d);
+  setTimeout(()=>d.remove(), 1800);
+}
+// rumor SIR
+function seedRumor(post){
+  const rumor = { id: uid(), postId: post.id, text: post.text, heat: .9, spreaders:new Set(), skeptics:new Set(), day: G.day };
+  G.rumors.push(rumor); return rumor;
+}
+function spreadRumor(post, npc){
+  let r = G.rumors.find(r=>r.postId===post.id); if(!r) r = seedRumor(post);
+  if(r.spreaders.has(npc.handle) || r.skeptics.has(npc.handle)) return;
+  r.spreaders.add(npc.handle);
+  const mutated = renderLine('rumor_spread', npc, {t: r.text.length>70 ? r.text.slice(0,67)+'…' : r.text});
+  const p2 = addPost(npc.handle, 'rumor', mutated, {reach: npc.followers*.35});
+  p2.isRumorEcho = true;
+  VFX.burst(innerWidth/2, 200, 14, ['#9b5bff','#22e6ff']);
+}
+// player posts
+function playerPost(type, text, target){
+  const pt = PTYPES[type];
+  if(!text.trim()){ toast('Write something first ✍️'); return null; }
+  const post = addPost('player', type, text.trim(), {});
+  G.stats.posts++;
+  G.player.credibility = clamp(G.player.credibility + pt.cred, 0, 100);
+  SFX.post(); VFX.burst(innerWidth/2, innerHeight-220, 22);
+  if(type==='rumor') seedRumor(post);
+  if(type==='callout' && target){ relAdd(G.player.handle, target, -25); relAdd(target, G.player.handle, -25); maybeStartFeud(G.player.handle, target); }
+  if(type==='collab' && target){ tryCollab(G.player.handle, target, post); }
+  // NPC reactions
+  for(const n of G.npcs) npcReact(n, post);
+  // engagement tally after reactions settle
+  setTimeout(()=>settlePost(post), 2400);
+  renderAll(); save();
+  return post;
+}
+function settlePost(post){
+  if(G.over) return;
+  const gained = Math.floor(post.likes*.35 + post.comments.length*2.2 + post.reposts*6);
+  if(gained > 0){
+    G.player.followers += gained;
+    VFX.floater(innerWidth/2, 160, '+'+fmtN(gained)+' 👥');
+  }
+  const velocity = post.likes + post.comments.length*3 + post.reposts*5;
+  if(!post.trending && velocity > 40 + G.player.followers*.02){
+    post.trending = true; G.stats.viral++;
+    G.player.followers += Math.floor(G.player.followers*.08)+50;
+    SFX.viral(); VFX.confetti(90);
+    pushTicker(`🔥 TRENDING: "${esc(post.text.slice(0,50))}…" is blowing up!`);
+    toast('🔥 YOUR POST IS TRENDING!');
+  }
+  // scandal risk on debunked rumors handled in rumor tick
+  checkWinLose(); renderAll(); save();
+}
+function tryCollab(fromH, targetH, post){
+  const npc = npcByHandle(targetH); if(!npc) return;
+  const relV = relGet(fromH, targetH);
+  const odds = .35 + relV/200 + npc.loyalty*.2;
+  if(G.rng() < odds){
+    G.stats.collabs++;
+    const gain = Math.floor(npc.followers*.06)+30;
+    G.player.followers += gain; npc.followers += Math.floor(gain*.5);
+    relAdd(fromH, targetH, 20); relAdd(targetH, fromH, 20);
+    addComment(post, npc, renderLine('collab_ask', npc, {}) + ' Let\'s DO this!! 🤝');
+    SFX.milestone(); VFX.confetti(50);
+    pushTicker(`🤝 Collab! ${esc(npc.name)} teamed up with you (+${fmtN(gain)} followers)`);
+    toast('🤝 Collab accepted!');
+  } else {
+    relAdd(fromH, targetH, -10);
+    addComment(post, npc, renderLine('mock', npc, {t:'collab?'}) + ' …maybe when you\'re relevant.');
+    toast('❌ Collab declined…');
+  }
+}
+function maybeStartFeud(aH, bH){
+  if(G.feuds.some(f=>(f.a===aH&&f.b===bH)||(f.a===bH&&f.b===aH))) return;
+  const b = bH==='player'?null:npcByHandle(bH);
+  const spiceB = b ? b.spice : .6;
+  if(G.rng() < .35 + spiceB*.4){
+    G.feuds.push({a:aH, b:bH, days:3, heat:.8});
+    SFX.drama(); VFX.embers(40);
+    const bn = b ? b.name : 'you';
+    pushTicker(`🥊 FEUD: ${esc(aH)} vs ${esc(bn)} — the Verse is watching.`);
+    showDrama(`🥊 FEUD ERUPTS: ${esc(aH)} vs ${esc(bn)}!`);
+    toast('🥊 FEUD!');
+  }
+}
+// NPC ambient posts (day tick + game start)
+function npcAmbientPost(npc, quiet=false){
+  const r = G.rng();
+  const flavor = pick(G.rng, G.universe.flavor);
+  let text, type='take';
+  if(r < .3){ text = renderLine('support', npc, {t:flavor}) + ` ${pick(G.rng,['💯','✨','🔥'])}`; }
+  else if(r < .5){ type='photo'; text = pick(G.rng,['New fit just dropped','Training arc day '+(1+((G.rng()*99)|0)),'No filter needed','POV: you\'re the main character']); }
+  else if(r < .65){ type='poll'; text = pick(G.rng, LINES.poll_q); }
+  else if(r < .8){ text = `Unpopular opinion: ${flavor} is overrated. Come at me. 🔥`; }
+  else { const other = pick(G.rng, G.npcs.filter(n=>n!==npc)); text = `Shoutout to ${other.handle}, real one 🤝`; relAdd(npc.handle, other.handle, 4); }
+  const post = addPost(npc.handle, type, text, {});
+  post.likes = Math.floor(npc.followers*.02*G.rng());
+  // a couple of NPCs react to ambient posts too (keeps feed alive)
+  if(!quiet){ const others = G.npcs.filter(n=>n!==npc).slice(0,3); for(const o of others) if(G.rng()<.4) npcReact(o, post, true); }
+  return post;
+}
+// rival AI
+function rivalAct(){
+  const R = G.rival; if(!R || G.over) return;
+  const rank = playerRank();
+  const escalate = rank <= 3;
+  const r = G.rng();
+  if(escalate && r < .45){
+    // target the player
+    const kind = pick(G.rng, ['subtweet','callout','smear']);
+    if(kind==='subtweet'){
+      addPost(R.handle, 'take', renderLine('mock', R, {t:'some newbie'}) + ` Funny how the new kid thinks they're #${rank} material. 💅`);
+    } else if(kind==='callout'){
+      const p = addPost(R.handle, 'callout', renderLine('feud', R, {t:G.player.handle}), {target:G.player.handle});
+      relAdd(R.handle, G.player.handle, -20); relAdd(G.player.handle, R.handle, -20);
+      maybeStartFeud(R.handle, G.player.handle);
+      pushTicker(`🎯 ${esc(R.name)} CALLED YOU OUT.`);
+    } else {
+      const p = addPost(R.handle, 'rumor', renderLine('rumor_spread', R, {t:`${G.player.handle} buys followers 👀`}));
+      seedRumor(p);
+      pushTicker(`👂 Smear rumor about you is spreading…`);
+    }
+  } else {
+    npcAmbientPost(R);
+  }
+  R.followers += Math.floor(R.followers * (.02 + G.rng()*.03)); // the crown keeps growing
+}
+// day tick
+function nextDay(){
+  if(G.over || G._ticking) return; G._ticking = true;
+  SFX.day(); G.day++;
+  // NPC scheduled posts
+  for(const n of G.npcs){ if(G.rng() < .5) npcAmbientPost(n); n.mood = pick(G.rng,['chill','hype','salty','focused']); }
+  rivalAct();
+  // rumor SIR tick
+  for(const r of G.rumors){
+    r.heat *= .82;
+    if(r.heat < .08){ r.dead = true; continue; }
+    for(const n of G.npcs){
+      if(r.spreaders.has(n.handle) || r.skeptics.has(n.handle)) continue;
+      const exposure = [...r.spreaders].filter(h=>Math.abs(relGet(n.handle,h))>10).length;
+      const p = r.heat * .22 * (0.4 + n.chaos*.6) * (1 + exposure*.3);
+      if(G.rng() < p){
+        if(G.rng() < .18){ r.skeptics.add(n.handle); // debunk!
+          const post = G.rumors.find(x=>x.postId===r.postId);
+          addPost(n.handle, 'take', '⚠️ ' + renderLine('debunk', n, {t:'"'+r.text.slice(0,50)+'…"'}));
+          if(r.postId && (G.posts.find(p=>p.id===r.postId)?.author==='player')){
+            G.player.credibility = clamp(G.player.credibility-6,0,100);
+            G.player.strikes += .5; // rumor-mongering is risky
+            pushTicker(`⚠️ Your rumor got debunked by ${esc(n.name)}. Credibility down.`);
+          }
+        } else spreadRumor({id:r.postId, text:r.text, type:'rumor'}, n);
+      }
+    }
+  }
+  G.rumors = G.rumors.filter(r=>!r.dead);
+  // relationship drift to baseline
+  for(const k in G.rel){ const v = G.rel[k]; G.rel[k] = v*.96; if(Math.abs(G.rel[k])<1) delete G.rel[k]; }
+  // feuds progress
+  for(const f of G.feuds){ f.days--; f.heat*=.85;
+    if(f.days<=0){ f.done=true;
+      const playerInvolved = f.a===G.player.handle || f.b===G.player.handle;
+      if(playerInvolved){ // resolve: winner = higher clout+followers
+        const foe = f.a===G.player.handle ? npcByHandle(f.b) : npcByHandle(f.a);
+        const pPow = G.player.followers*(0.5+G.player.credibility/200);
+        const fPow = foe ? foe.followers*(0.5+foe.clout) : 1;
+        if(pPow > fPow){ G.stats.feudsWon++; const g=Math.floor((foe?.followers||1000)*.04)+40; G.player.followers+=g;
+          G.player.rep=clamp(G.player.rep+6,0,100); pushTicker(`🏆 You WON the feud vs ${esc(foe?.name||'?')}! (+${fmtN(g)} followers)`); SFX.milestone(); VFX.confetti(60);
+        } else { G.player.rep=clamp(G.player.rep-10,0,100); G.player.strikes+=.5; pushTicker(`💀 You LOST the feud vs ${esc(foe?.name||'?')}. Reputation dented.`); SFX.scandal(); }
+      }
+    }
+  }
+  G.feuds = G.feuds.filter(f=>!f.done);
+  // scandal decay, organic growth
+  G.player.strikes = Math.max(0, G.player.strikes - .25);
+  G.player.followers += Math.floor(G.player.followers*.015);
+  for(const n of G.npcs) n.followers += Math.floor(n.followers*(.01+G.rng()*.02));
+  // random world event
+  if(G.rng() < .14) worldEvent();
+  // milestone check
+  const tiers = [1000,10000,50000,250000];
+  for(const t of tiers){ if(G.player.followers>=t && !G['ms'+t]){ G['ms'+t]=1; SFX.milestone(); VFX.confetti(70); pushTicker(`🎉 MILESTONE: ${fmtN(t)} followers!!`); toast(`🎉 ${fmtN(t)} followers!`); } }
+  G._ticking = false;
+  checkWinLose(); renderAll(); save();
+}
+function worldEvent(){
+  const ev = pick(G.rng,[
+    ()=>{ const g=Math.floor(G.player.followers*.05)+20; G.player.followers+=g; pushTicker('🎁 Mysterious benefactor boosted you! (+'+fmtN(g)+')'); SFX.milestone(); },
+    ()=>{ const n=pick(G.rng,G.npcs); const g=Math.floor(n.followers*.08); n.followers+=g; pushTicker(`📈 ${esc(n.name)} went viral overnight!`); },
+    ()=>{ pushTicker('🌐 The Verse servers lag… engagement is weird today.'); },
+    ()=>{ const a=pick(G.rng,G.npcs), b=pick(G.rng,G.npcs.filter(n=>n!==a)); relAdd(a.handle,b.handle,-30); pushTicker(`🍿 Drama: ${esc(a.name)} unfollowed ${esc(b.name)}!`); SFX.drama(); },
+    ()=>{ G.player.rep=clamp(G.player.rep+5,0,100); pushTicker('💜 A wholesome edit of you is trending. Rep up!'); },
+  ]);
+  ev();
+}
+function leaderboard(){
+  return [{handle:G.player.handle,name:G.player.name+' (you)',followers:G.player.followers,me:true,emoji:G.player.emoji,seed:7},
+    ...G.npcs.map(n=>({handle:n.handle,name:n.name,followers:n.followers,me:false,emoji:n.emoji,seed:n.seed,rival:n.isRival}))]
+    .sort((a,b)=>b.followers-a.followers);
+}
+function playerRank(){ return leaderboard().findIndex(e=>e.me)+1; }
+function checkWinLose(){
+  if(G.over) return;
+  if(G.player.strikes>=3 || G.player.rep<=0){ return gameOver(false, G.player.rep<=0?'Your reputation hit zero. The Verse has spoken.':'Three strikes. You\'re CANCELED.'); }
+  if(playerRank()===1 && G.day>1){ return gameOver(true, 'You dethroned '+G.rival.name+' and seized the crown. #1 INFLUENCER OF THE VERSE. 👑'); }
+}
+function gameOver(won, sub){
+  G.over = won?'win':'lose';
+  if(won){ SFX.win(); VFX.confetti(200); } else { SFX.lose(); }
+  $('go-emoji').textContent = won?'👑':'💀';
+  $('go-title').textContent = won?'#1 INFLUENCER!':'CANCELED.';
+  $('go-sub').textContent = sub;
+  $('go-stats').innerHTML = `
+    <div class="kv"><span>📅 Days survived</span><b>${G.day}</b></div>
+    <div class="kv"><span>👥 Final followers</span><b>${fmtN(G.player.followers)}</b></div>
+    <div class="kv"><span>📝 Posts</span><b>${G.stats.posts}</b></div>
+    <div class="kv"><span>🔥 Viral hits</span><b>${G.stats.viral}</b></div>
+    <div class="kv"><span>🥊 Feuds won</span><b>${G.stats.feudsWon}</b></div>
+    <div class="kv"><span>🤝 Collabs</span><b>${G.stats.collabs}</b></div>
+    <div class="kv"><span>🌌 Universe</span><b>${esc(G.universe.name)}</b></div>`;
+  localStorage.removeItem('iv_save_v1');
+  showScreen('screen-gameover');
+}
+function pushTicker(msg){ G.ticker.unshift(msg); if(G.ticker.length>6)G.ticker.pop();
+  const t=$('ticker'); if(t) t.textContent = G.ticker.join('   ⚡   ') + '   ⚡'; }
+function showDrama(html){ const b=$('drama-banner'); if(!b) return; b.innerHTML=html; b.style.display='block';
+  clearTimeout(b._h); b._h=setTimeout(()=>b.style.display='none', 6000); }
+
+// ---------- AI cascade: Puter.js -> Groq key -> Gemini key -> WebLLM -> pure sim ----------
+// The LLM ONLY renders wording for intents the sim already chose. Never game state.
+const AI = {
+  tier:'sim', puterOK:false, groqKey:'', geminiKey:'', webllm:null, webllmLoading:false,
+  q:[], busy:false, lastCall:0,
+  tierName(){ return {puter:'⚡ Puter AI', groq:'⚡ Groq', gemini:'⚡ Gemini', webllm:'⚡ Local LLM', sim:'🤖 Simulated'}[this.tier]; },
+  refreshBadge(){ const t=this.tierName(), ai=this.tier!=='sim';
+    for(const id of ['ai-tier-badge','ai-tier-badge2']){ const b=$(id); if(b){ b.textContent=t; b.className='aibadge '+(ai?'ai':'sim'); } }
+    const h=$('ai-tier-hint'); if(h) h.textContent = ai ? 'AI voices ON — NPC lines are LLM-written (sim still owns all game logic).' : 'Offline mode: NPCs run on the built-in personality engine. Enable AI in Settings for LLM-written lines.';
+  },
+  async detect(){
+    this.groqKey = localStorage.getItem('iv_groq')||'';
+    this.geminiKey = localStorage.getItem('iv_gemini')||'';
+    if(this.puterOK && window.puter?.ai?.chat) this.tier='puter';
+    else if(this.groqKey) this.tier='groq';
+    else if(this.geminiKey) this.tier='gemini';
+    else if(this.webllm) this.tier='webllm';
+    else this.tier='sim';
+    this.refreshBadge();
+  },
+  async enablePuter(){
+    try{
+      if(!window.puter?.ai?.chat) throw new Error('no puter');
+      const r = await Promise.race([ window.puter.ai.chat('Reply with exactly: ok'), new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),20000)) ]);
+      this.puterOK = true; this.tier='puter'; this.refreshBadge();
+      toast('⚡ Puter AI enabled — NPCs got voices!');
+      return true;
+    }catch(e){ toast('Puter unavailable — staying simulated.'); this.tier = this.groqKey?'groq':this.geminiKey?'gemini':'sim'; this.refreshBadge(); return false; }
+  },
+  async enableWebLLM(){
+    if(this.webllmLoading) return;
+    try{
+      this.webllmLoading = true; toast('⬇ Loading local model (one-time download)…');
+      const m = await import('https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@latest/+esm');
+      const engine = await m.CreateMLCEngine('Llama-3.2-1B-Instruct-q4f16_1-MLC', {logLevel:'SILENT'});
+      this.webllm = engine; this.webllmLoading = false; this.tier='webllm'; this.refreshBadge();
+      toast('⚡ Local LLM ready (offline brain).');
+    }catch(e){ this.webllmLoading=false; toast('WebLLM failed to load — staying on current tier.'); }
+  },
+  // low-level chat with timeout; returns text or null
+  async _chat(sys, user, maxTok=60){
+    const msgs = [{role:'system',content:sys},{role:'user',content:user}];
+    const withTimeout = (p,ms) => Promise.race([p, new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),ms))]);
+    try{
+      if(this.tier==='puter' && window.puter?.ai?.chat){
+        const r = await withTimeout(window.puter.ai.chat(msgs,{model:'gpt-4o-mini',max_tokens:maxTok,temperature:.8}), 25000);
+        const t = typeof r==='string'?r:(r?.message?.content||r?.text||'');
+        return (t||'').trim()||null;
+      }
+      if(this.tier==='groq' && this.groqKey){
+        const r = await withTimeout(fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',
+          headers:{'Authorization':'Bearer '+this.groqKey,'Content-Type':'application/json'},
+          body:JSON.stringify({model:'llama-3.1-8b-instant',messages:msgs,max_tokens:maxTok,temperature:.8})}),25000);
+        const j = await r.json(); return (j.choices?.[0]?.message?.content||'').trim()||null;
+      }
+      if(this.tier==='gemini' && this.geminiKey){
+        const r = await withTimeout(fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+this.geminiKey,
+          {method:'POST',headers:{'Content-Type':'application/json'},
+           body:JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents:[{parts:[{text:user}]}],generationConfig:{maxOutputTokens:maxTok,temperature:.8}})}),25000);
+        const j = await r.json(); return (j.candidates?.[0]?.content?.parts?.[0]?.text||'').trim()||null;
+      }
+      if(this.tier==='webllm' && this.webllm){
+        const chunks = await withTimeout(this.webllm.chat.completions.create({messages:msgs,max_tokens:maxTok,temperature:.8}), 60000);
+        return (chunks.choices?.[0]?.message?.content||'').trim()||null;
+      }
+    }catch(e){ /* fall through to null */ }
+    return null;
+  },
+  // queued wording render (rate-limited); falls back to sim template on any failure
+  wording(npc, kind, ctx, fallback){
+    if(this.tier==='sim') return Promise.resolve(fallback);
+    return new Promise(res=>{
+      this.q.push({npc,kind,ctx,fallback,res});
+      this._pump();
+    });
+  },
+  async _pump(){
+    if(this.busy || !this.q.length) return; this.busy = true;
+    const {npc,kind,ctx,fallback,res} = this.q.shift();
+    const wait = Math.max(0, 1200 - (Date.now()-this.lastCall)); await new Promise(r=>setTimeout(r,wait));
+    this.lastCall = Date.now();
+    const sys = `You are ${npc.name} (${npc.handle}) in the fictional universe "${G.universe?.name||'the Verse'}". Personality: ${npc.bio}. Voice: ${npc.voice}. You post short social-media lines (max 140 chars). Stay in character and in-universe. Never mention being an AI. No hashtags spam.`;
+    const user = `Context: ${ctx}\nWrite ONE ${kind} line as ${npc.name}. Max 140 characters. Plain text only, no quotes.`;
+    let t = await this._chat(sys, user, 60);
+    if(t){ t = t.replace(/^["']|["']$/g,'').slice(0,140); if(!t || /as an ai/i.test(t)) t = null; }
+    // runtime roster validation (Narnia test, layer 4)
+    if(t && G.npcs.length && mentionsOutsider(t)) t = null;
+    res(t || fallback);
+    this.busy = false; this._pump();
+  },
+  // ---- AI cast generation for free-text universes ----
+  async genCast(universeName){
+    const sys = 'You are a pop-culture archivist. Return ONLY valid JSON, no markdown, no commentary.';
+    const draftP = `List 12 canonical characters from the fictional universe "${universeName}". For each: name, handle (like @name_snake, lowercase), faction, three adjectives, spice/loyalty/chaos/clout as 0-1 numbers, two relationships as [name, value -100..100], voice (one of: spicy, wholesome, formal, menace, chaos, cryptic), one-line bio, one emoji. RULES: only characters canonically from "${universeName}". Cross-franchise characters are FORBIDDEN. If unsure about a character, OMIT them — never invent. JSON shape: {"franchise":"...","characters":[{"name":"...","handle":"...","faction":"...","adjectives":["","",""],"spice":0.5,"loyalty":0.5,"chaos":0.5,"clout":0.5,"relationships":[["Name",20],["Name",-30]],"voice":"spicy","bio":"...","emoji":"😎"}]}`;
+    let draft = await this._chat(sys, draftP, 2000);
+    if(!draft) return null;
+    let data; try{ data = JSON.parse(draft.replace(/```json|```/g,'')); }catch(e){ return null; }
+    let chars = (data.characters||[]).filter(c=>c.name && c.handle).slice(0,12);
+    if(chars.length < 6) return null;
+    // chain-of-verification: which franchise is each from?
+    const verifyP = `For each name, which franchise is it canonically from? Names: ${chars.map(c=>c.name).join(', ')}. Return ONLY JSON: {"Name":"Franchise",...}`;
+    const vtxt = await this._chat(sys, verifyP, 500);
+    if(vtxt){ try{ const vmap = JSON.parse(vtxt.replace(/```json|```/g,''));
+      const want = universeName.toLowerCase();
+      chars = chars.filter(c=>{ const f = String(vmap[c.name]||'').toLowerCase(); return f.includes(want) || want.includes(f) || f===''; });
+    }catch(e){} }
+    // blocklist (famous cross-franchise names) — hard gate
+    chars = chars.filter(c=>!mentionsOutsider(c.name+' '+c.bio, true));
+    if(chars.length < 6) return null;
+    // Fandom wiki allowlist (best-effort; skip on failure)
+    try{
+      const slug = universeName.toLowerCase().replace(/[^a-z0-9]+/g,'');
+      const r = await Promise.race([fetch(`https://${slug}.fandom.com/api.php?action=query&list=categorymembers&cmtitle=Category:Characters&cmlimit=500&format=json&origin=*`), new Promise((_,rej)=>setTimeout(()=>rej(new Error('t')),8000))]);
+      const j = await r.json();
+      const titles = new Set((j.query?.categorymembers||[]).map(m=>m.title.toLowerCase()));
+      if(titles.size>20){ const before=chars.length; chars = chars.filter(c=>titles.has(c.name.toLowerCase())); if(chars.length<6) chars = chars; }
+    }catch(e){ /* allowlist skipped; verification pass + review carry it */ }
+    if(chars.length < 6) return null;
+    // normalize to NPC defs
+    const defs = chars.map((c,i)=>({
+      name:c.name, handle:c.handle.startsWith('@')?c.handle:'@'+c.handle,
+      arch:'rival', spice:clamp(+c.spice||.5,0,1), loyalty:clamp(+c.loyalty||.5,0,1),
+      chaos:clamp(+c.chaos||.5,0,1), clout:clamp(+c.clout||.5,0,1),
+      faction:c.faction||'Unaffiliated', voice:['spicy','wholesome','formal','menace','chaos','cryptic'].includes(c.voice)?c.voice:'spicy',
+      bio:c.bio||c.adjectives?.join(', ')||'', emoji:c.emoji||'🙂',
+      followers: Math.floor(15000 + (12-i)*5200 + Math.random()*8000), seed: 1000+i*37,
+    }));
+    // seed a few relationships from the draft
+    const rels=[];
+    chars.forEach((c,i)=>{ (c.relationships||[]).slice(0,2).forEach(([nm,v])=>{ const j=chars.findIndex(x=>x.name===nm); if(j>=0) rels.push([defs[i].handle, defs[j].handle, clamp(+v||0,-100,100)]); }); });
+    return { id:'custom-'+Date.now().toString(36), name: universeName, tag:'AI-summoned cast', emoji:'✨',
+      aliases:[], c1:'#22e6ff', c2:'#9b5bff', npcs:defs, rels,
+      flavor:['plot twist','season finale','spin-off','crossover episode','fan theory','lore drop','Easter egg','cliffhanger'] };
+  }
+};
+// famous cross-franchise names — runtime contamination guard (Narnia test, layer 4)
+const OUTSIDER_NAMES = ['aslan','voldemort','gandalf','sauron','fodder','skywalker','vader','yoda','goku','vegeta','naruto','sasuke','luffy','zoro','pikachu','mario','sonic','batman','superman','spiderman','iron man','thor','hulk','darth','hermione','ron weasley','dumbledore','snape','gandalf','frodo','legolas','katniss','geralt','kratos','master chief','link ','zelda','sephiroth','cloud strife','ichigo','eren','levi','gojo','tanjiro','nezuko','deku','bakugo','shinobu','inuyasha','gintoki'];
+function mentionsOutsider(text, strict=false){
+  const t = ' '+String(text).toLowerCase()+' ';
+  return OUTSIDER_NAMES.some(n => strict ? t.includes(n) : new RegExp('\\b'+n.replace(/ /g,'\\s+')+'\\b').test(t));
+}
+
+// ---------- rendering ----------
+function renderHUD(){
+  $('hdr-day').textContent = G.day;
+  $('hdr-followers').textContent = fmtN(G.player.followers);
+  $('hdr-rank').textContent = playerRank();
+  $('hdr-rep').textContent = Math.round(G.player.rep);
+  $('hdr-scandal').textContent = Math.floor(G.player.strikes);
+  $('hdr-scandal-wrap').style.color = G.player.strikes>=2 ? 'var(--danger)' : '';
+}
+function postCard(p){
+  const isP = p.author==='player';
+  const npc = isP ? null : npcByHandle(p.author);
+  const av = isP ? `<div class="avatar" style="background:linear-gradient(135deg,#22e6ff,#9b5bff)">😎</div>` : avatarHTML(npc||{emoji:'👤',seed:1});
+  const nm = isP ? esc(G.player.name+' (you)') : esc(npc?.name||p.author);
+  const hd = isP ? esc(G.player.handle) : esc(p.author);
+  const pt = PTYPES[p.type];
+  const badges = (p.trending?'<span class="badge fire">🔥 TRENDING</span>':'') +
+    (p.type==='rumor'?'<span class="badge rumor">👂 RUMOR</span>':'') +
+    (p.type==='poll'?'<span class="badge poll">📊 POLL</span>':'') +
+    (p.type==='callout'?'<span class="badge rumor">🎯 CALLOUT</span>':'');
+  const comments = p.comments.map(c=>`<div class="comment">${avatarHTML({emoji:c.emoji,seed:c.seed},28)}<div class="cb"><span class="cn">${esc(c.by)}</span><br>${esc(c.text)}</div></div>`).join('');
+  return `<div class="post${p.trending?' trending':''}" data-pid="${p.id}">
+    <div class="head">${av}<div class="who"><div class="nm">${nm}${badges}</div><div class="hd">${hd} · D${p.day} · ${pt.emoji} ${esc(pt.name.replace(/^[^\s]+\s/,''))}</div></div></div>
+    <div class="txt">${esc(p.text)}${p.target?` <b style="color:var(--neon-pink)">${esc(p.target)}</b>`:''}</div>
+    ${p.photo?`<div class="photoart">${p.photo}</div>`:''}
+    <div class="actions"><span>💜 ${fmtN(p.likes)}</span><span>💬 ${p.comments.length}</span><span>🔁 ${fmtN(p.reposts)}</span></div>
+    ${comments?`<div class="comments">${comments}</div>`:''}
+  </div>`;
+}
+function renderFeed(){ const f=$('feed-list'); if(!f) return; f.innerHTML = G.posts.map(postCard).join('') || '<div class="hint center">No posts yet — drop your first take ✍️</div>'; }
+function renderRanks(){
+  const lb = leaderboard(); const max = lb[0]?.followers||1;
+  $('ranks-list').innerHTML = lb.map((e,i)=>`
+    <div class="rankrow${e.me?' me':''}${e.rival?' rival':''}">
+      <div class="pos">${i===0?'👑':i+1}</div>
+      ${avatarHTML({emoji:e.emoji,seed:e.seed},40)}
+      <div style="flex:1"><b>${esc(e.name)}</b> <span class="hint">${esc(e.handle)}</span>
+        <div class="bar" style="width:${Math.max(4, e.followers/max*100)}%"></div></div>
+      <b style="color:var(--neon-gold)">${fmtN(e.followers)}</b>
+    </div>`).join('');
+}
+function renderVerse(){
+  $('verse-grid').innerHTML = G.npcs.map(n=>`
+    <div class="npccard" data-h="${esc(n.handle)}">
+      ${avatarHTML(n,54)}<div class="nm">${esc(n.name)}${n.isRival?' 👑':''}</div>
+      <div class="fl">👥 ${fmtN(n.followers)}</div>
+      <div class="hint" style="font-size:11px">${esc(n.faction)}</div>
+    </div>`).join('');
+  $('verse-grid').querySelectorAll('.npccard').forEach(c=>c.onclick=()=>openNpc(c.dataset.h));
+}
+function renderAll(){ if(!G.player) return; renderHUD(); renderFeed(); renderRanks(); renderVerse(); }
+function openNpc(handle){
+  const n = npcByHandle(handle); if(!n) return; SFX.click();
+  $('npcp-avatar').textContent = n.emoji;
+  $('npcp-avatar').style.background = `linear-gradient(135deg,hsl(${n.seed%360},80%,55%),hsl(${(n.seed%360+60)%360},80%,45%))`;
+  $('npcp-name').textContent = n.name + (n.isRival?' 👑':'');
+  $('npcp-handle').textContent = n.handle + ' · ' + n.arch;
+  $('npcp-followers').textContent = fmtN(n.followers);
+  $('npcp-faction').textContent = n.faction;
+  $('npcp-vibe').textContent = n.bio;
+  const rv = relGet(G.player.handle, n.handle);
+  const pct = (rv+100)/2;
+  $('npcp-rel').style.width = pct+'%';
+  $('npcp-rel').style.background = rv>=0 ? 'var(--neon-lime)' : 'var(--danger)';
+  const mem = n.mem.slice(-3).map(m=>`• ${esc(m.txt)}`).join('<br>') || 'No history yet. Make some.';
+  $('npcp-memory').innerHTML = '<b>Recent history:</b><br>'+mem;
+  $('btn-npc-follow').textContent = n.following ? '✅ Following' : '🤝 Follow';
+  $('btn-npc-follow').onclick = ()=>{ n.following=!n.following; relAdd(G.player.handle,n.handle,n.following?8:-8); SFX.like(); openNpc(handle); renderAll(); };
+  $('modal-npc').classList.add('open');
+}
+// ---------- compose ----------
+function openCompose(){
+  SFX.click();
+  const ct = $('compose-types');
+  ct.innerHTML = Object.entries(PTYPES).map(([k,v])=>`<button class="typebtn${k===G.composeType?' sel':''}" data-t="${k}">${v.name}</button>`).join('');
+  ct.querySelectorAll('.typebtn').forEach(b=>b.onclick=()=>{ G.composeType=b.dataset.t; SFX.click(); openCompose(); updateSpice(); toggleTarget(); });
+  const sel = $('compose-target');
+  sel.innerHTML = G.npcs.map(n=>`<option value="${esc(n.handle)}">${esc(n.name)} (${esc(n.handle)})</option>`).join('');
+  $('compose-text').value=''; updateSpice(); toggleTarget();
+  $('modal-compose').classList.add('open'); setTimeout(()=>$('compose-text').focus(),150);
+}
+function toggleTarget(){ $('compose-target-wrap').style.display = PTYPES[G.composeType].target ? 'block' : 'none'; }
+function updateSpice(){ const pt = PTYPES[G.composeType]; $('spice-meter').style.width = Math.round(pt.spice*100)+'%'; }
+// ---------- universe flow ----------
+let pendingPack = null;
+function renderChips(){
+  $('uni-chips').innerHTML = UNIVERSES.map(u=>`<div class="chip" data-u="${u.id}">${u.emoji} ${esc(u.name)}</div>`).join('');
+  $('uni-chips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{ SFX.click(); $('uni-input').value = UNIVERSES.find(u=>u.id===c.dataset.u).name; });
+}
+async function startVerse(){
+  SFX.click();
+  const input = $('uni-input').value.trim();
+  const handle = $('player-handle').value.trim() || '@rookie';
+  const arch = $('player-archetype').value;
+  if(!input){ toast('Name a universe first 🌌'); return; }
+  // crossover detect -> explicit opt-in
+  if(CROSSOVER_RE.test(input) && !startVerse._xo){
+    if(!confirm('⚡ Crossover mode detected ("'+input+'"). Characters from MULTIPLE universes will appear. Continue?')){
+      toast('Pick a single universe instead 🙂'); return;
+    }
+    startVerse._xo = true;
+  }
+  const btn = $('btn-start-verse'); btn.disabled = true; btn.textContent = '⚡ SUMMONING…';
+  try{
+    const pack = findPack(input);
+    if(pack){ pendingPack = {def:pack, custom:false}; }
+    else if(AI.tier!=='sim'){
+      toast('🔮 Consulting the archives… (AI is dreaming up your cast)');
+      const gen = await AI.genCast(input);
+      if(!gen){ toast('Couldn\'t summon that universe — try a curated realm or check AI settings.'); btn.disabled=false; btn.textContent='SUMMON THE CAST ⚡'; return; }
+      pendingPack = {def:gen, custom:true};
+    } else {
+      toast('🤖 Custom universes need AI voices — pick a curated realm or enable AI in Settings.');
+      btn.disabled=false; btn.textContent='SUMMON THE CAST ⚡'; return;
+    }
+    pendingPack.handle = handle; pendingPack.arch = arch;
+    renderCastReview(pendingPack.def);
+    showScreen('screen-cast');
+  } finally { btn.disabled=false; btn.textContent='SUMMON THE CAST ⚡'; }
+}
+function renderCastReview(def){
+  $('cast-sub').innerHTML = `12 influencers. One crown. <b style="color:var(--neon-pink)">${esc(def.npcs.slice().sort((a,b)=>b.followers-a.followers)[0].handle)}</b> starts at #1 — dethrone them.`;
+  $('cast-grid').innerHTML = def.npcs.map(n=>`
+    <div class="castcard">${avatarHTML(n,60)}<div class="nm" style="font-weight:800;font-size:13px">${esc(n.name)}</div>
+    <div class="hint">${esc(n.handle)}</div><div class="fl" style="color:var(--neon-gold);font-weight:700;font-size:12px">👥 ${fmtN(n.followers)}</div>
+    <div class="hint" style="font-size:11px">${esc(n.bio.slice(0,60))}</div></div>`).join('');
+}
+function enterVerse(){
+  SFX.click();
+  newGame(pendingPack.def, pendingPack.handle, pendingPack.arch);
+  $('btn-compose').style.display='block';
+  showScreen('screen-game'); renderAll();
+  pushTicker(`⚡ ${esc(G.player.handle)} entered the Verse!`);
+  setTimeout(()=>{ toast('✍️ Tap the pen to drop your first take!'); }, 800);
+}
+// ---------- save / load ----------
+function save(){
+  if(!G.player) return;
+  try{
+    const data = { v:1, day:G.day, seed:G.seed, uid:_uid, universe:G.universe, player:G.player,
+      npcs:G.npcs.map(n=>({...n, said:n.said.slice(-6)})),
+      posts:G.posts.slice(0,40), rumors:G.rumors.map(r=>({...r, spreaders:[...r.spreaders], skeptics:[...r.skeptics]})),
+      rel:G.rel, stats:G.stats, feuds:G.feuds, ticker:G.ticker.slice(0,4),
+      rivalH: G.rival?.handle, ms:Object.keys(G).filter(k=>k.startsWith('ms')).reduce((o,k)=>(o[k]=1,o),{}) };
+    localStorage.setItem('iv_save_v1', JSON.stringify(data));
+  }catch(e){ /* quota — ignore */ }
+}
+function load(){
+  try{
+    const raw = localStorage.getItem('iv_save_v1'); if(!raw) return false;
+    const d = JSON.parse(raw); if(d.v!==1 || !d.player) return false;
+    G.universe=d.universe; G.day=d.day; G.seed=d.seed; _uid=d.uid||1; G.rng=mulberry(G.seed);
+    G.player=d.player; G.npcs=d.npcs; G.posts=d.posts||[];
+    G.rumors=(d.rumors||[]).map(r=>({...r, spreaders:new Set(r.spreaders), skeptics:new Set(r.skeptics)}));
+    G.rel=d.rel||{}; G.stats=d.stats||{posts:0,viral:0,feudsWon:0,collabs:0}; G.feuds=d.feuds||[]; G.ticker=d.ticker||[];
+    G.rival = npcByHandle(d.rivalH) || [...G.npcs].sort((a,b)=>b.followers-a.followers)[0];
+    Object.assign(G, d.ms||{});
+    return true;
+  }catch(e){ return false; }
+}
+// ---------- boot ----------
+function wireTabs(){
+  const tabs = [['tab-feed','panel-feed'],['tab-ranks','panel-ranks'],['tab-verse','panel-verse'],['tab-more','panel-more']];
+  for(const [t,p] of tabs) $(t).onclick = ()=>{ SFX.click();
+    tabs.forEach(([t2,p2])=>{ $(t2).classList.toggle('active', t2===t); $(p2).classList.toggle('active', p2===p); });
+    if(p==='panel-ranks') renderRanks(); if(p==='panel-verse') renderVerse(); };
+}
+function boot(){
+  VFX.init(); VFX.start();
+  // WebLLM opt-in row (experimental)
+  const puterRow = $('btn-ai-puter').closest('.setrow');
+  puterRow.insertAdjacentHTML('afterend', `<div class="setrow"><span>🧠 Local LLM (WebLLM, big download)</span><button class="btn small cyan" id="btn-ai-webllm">Load</button></div>`);
+  $('btn-ai-webllm').onclick = ()=>AI.enableWebLLM();
+  renderChips(); wireTabs(); AI.detect();
+  $('btn-enter').onclick = ()=>{ SFX.click(); showScreen('screen-universe'); };
+  $('btn-back-splash').onclick = ()=>{ SFX.click(); showScreen('screen-splash'); };
+  $('btn-surprise').onclick = ()=>{ SFX.click(); const u=pick(Math.random, UNIVERSES); $('uni-input').value=u.name; toast(u.emoji+' '+u.name); };
+  $('btn-start-verse').onclick = startVerse;
+  $('btn-back-uni').onclick = ()=>{ SFX.click(); showScreen('screen-universe'); };
+  $('btn-enter-verse').onclick = enterVerse;
+  $('btn-compose').onclick = openCompose;
+  $('btn-close-compose').onclick = ()=>{ SFX.click(); $('modal-compose').classList.remove('open'); };
+  $('compose-text').addEventListener('input', updateSpice);
+  $('btn-send-post').onclick = ()=>{ const t=$('compose-text').value; const tgt=$('compose-target').value;
+    if(playerPost(G.composeType, t, tgt)){ $('modal-compose').classList.remove('open'); } };
+  $('btn-next-day').onclick = ()=>nextDay();
+  $('btn-npc-close').onclick = ()=>{ SFX.click(); $('modal-npc').classList.remove('open'); };
+  $('btn-restart').onclick = ()=>{ SFX.click(); showScreen('screen-splash'); if(load()) $('btn-continue').style.display='block'; };
+  $('btn-ai-puter').onclick = ()=>AI.enablePuter();
+  $('btn-save-keys').onclick = ()=>{ localStorage.setItem('iv_groq', $('inp-groq-key').value.trim());
+    localStorage.setItem('iv_gemini', $('inp-gemini-key').value.trim()); AI.detect(); toast('💾 Keys saved.'); };
+  $('btn-save-now').onclick = ()=>{ save(); toast('💾 Saved!'); SFX.milestone(); };
+  $('btn-reset-save').onclick = ()=>{ if(confirm('Reset this run?')){ localStorage.removeItem('iv_save_v1'); location.reload(); } };
+  $('tgl-sfx').onclick = e=>{ SFX.enabled=!SFX.enabled; e.target.classList.toggle('on', SFX.enabled); SFX.click(); };
+  $('tgl-vfx').onclick = e=>{ VFX.enabled=!VFX.enabled; e.target.classList.toggle('on', VFX.enabled); SFX.click(); };
+  $('inp-groq-key').value = localStorage.getItem('iv_groq')||'';
+  $('inp-gemini-key').value = localStorage.getItem('iv_gemini')||'';
+  if(load()){ $('btn-continue').style.display='block';
+    $('btn-continue').onclick = ()=>{ SFX.click(); $('btn-compose').style.display='block'; showScreen('screen-game'); renderAll(); AI.detect(); }; }
+  showScreen('screen-splash');
+}
+document.addEventListener('DOMContentLoaded', boot);
+// ---------- test hooks (headless) ----------
+window.__IV = { G, UNIVERSES, PTYPES, newGame, playerPost, nextDay, npcReact, findPack, AI,
+  checkWinLose, maybeStartFeud, gameOver, playerRank, leaderboard,
+  domIds: ['screen-splash','screen-universe','screen-cast','screen-game','screen-gameover','btn-enter','btn-continue',
+  'uni-input','uni-chips','btn-surprise','btn-start-verse','player-handle','player-archetype','ai-tier-badge','ai-tier-hint',
+  'cast-grid','cast-sub','btn-enter-verse','btn-back-uni','hdr-day','hdr-followers','hdr-rank','hdr-rep','hdr-scandal',
+  'hdr-scandal-wrap','ticker','drama-banner','feed-list','btn-next-day','ranks-list','verse-grid','ai-tier-badge2',
+  'btn-ai-puter','inp-groq-key','inp-gemini-key','btn-save-keys','btn-reset-save','tgl-sfx','tgl-vfx','btn-save-now',
+  'tab-feed','tab-ranks','tab-verse','tab-more','panel-feed','panel-ranks','panel-verse','panel-more','btn-compose',
+  'modal-compose','compose-types','compose-text','compose-target','compose-target-wrap','spice-meter','btn-send-post',
+  'btn-close-compose','modal-npc','npcp-avatar','npcp-name','npcp-handle','npcp-followers','npcp-faction','npcp-vibe',
+  'npcp-rel','npcp-memory','btn-npc-follow','btn-npc-close','go-emoji','go-title','go-sub','go-stats','btn-restart',
+  'toast','vfx','btn-back-splash'] };
+</script>
+</body>
+</html>
