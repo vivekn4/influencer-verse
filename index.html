@@ -221,6 +221,7 @@ h2.st{font-size:20px;margin:14px 0 6px;color:#fff;text-shadow:0 0 14px rgba(155,
     <span class="stat">📅 Day <b id="hdr-day">1</b></span>
     <span class="stat">👥 <b id="hdr-followers">0</b></span>
     <span class="stat">🏆 #<b id="hdr-rank">–</b></span>
+    <span class="stat">🔥 <b id="hdr-streak">0</b></span>
     <span class="stat">💜 <b id="hdr-rep">50</b></span>
     <span class="stat" id="hdr-scandal-wrap">🚨 <b id="hdr-scandal">0</b></span>
     <span class="vn-tag" style="margin-left:auto">VN</span>
@@ -230,6 +231,13 @@ h2.st{font-size:20px;margin:14px 0 6px;color:#fff;text-shadow:0 0 14px rgba(155,
 
   <div id="panel-feed" class="tabpanel active">
     <div id="feed-list"></div>
+    <div id="burnout-line" class="hint" style="display:none"></div>
+    <div id="pivot-bar" class="card hot" style="display:none">
+      <b>📉 Stalled at the same rank for 3 days — time to REINVENT?</b>
+      <div class="hint">One-time pivot. Evolve swaps your vibe for a fresh audience; Double Down boosts reach but costs reputation.</div>
+      <button class="btn small cyan" id="btn-pivot-evolve">🦋 Evolve (new vibe)</button>
+      <button class="btn small gold" id="btn-pivot-double">💪 Double Down (+reach)</button>
+    </div>
     <button class="btn" id="btn-next-day" style="margin-top:14px">⏭ NEXT DAY</button>
   </div>
   <div id="panel-ranks" class="tabpanel">
@@ -260,7 +268,7 @@ h2.st{font-size:20px;margin:14px 0 6px;color:#fff;text-shadow:0 0 14px rgba(155,
     </div>
     <div class="card">
       <h2 class="st" style="margin-top:0">❓ How to play</h2>
-      <div class="hint">📝 Post takes, rumors, photos, callouts, collabs & polls.<br>📈 Engagement → followers. Hit <b>#1</b> to win.<br>🚨 Scandals build strikes — 3 strikes or 0 reputation = <b>canceled</b>.<br>🗓️ Rivals post daily and escalate when you crack the top 3.<br>🤝 Befriend NPCs for collabs; feuds are fame fuel but risky.</div>
+      <div class="hint">📝 Post takes, rumors, photos, callouts, collabs & polls.<br>📈 Engagement → followers. Hit <b>#1</b> to win.<br>🌊 Posts ripple through the follower graph — engagers expose their links, and a good post cascades. Each post gets a verdict (Flop / Niche / Slow Burn / Viral).<br>🎯 Match your post type to the crowd: drama lovers spread Hot Takes, wholesome fans spread Collabs.<br>🔥 Post daily to build a streak (+2% followers at 3+ days). 😩 4+ posts a day builds burnout — rest to recover.<br>🦋 Stall 3 days at one rank to unlock a one-time Reinvention pivot.<br>🚨 Scandals build strikes — 3 strikes or 0 reputation = <b>canceled</b>.<br>🗓️ Rivals post daily and escalate when you crack the top 3.<br>🤝 Befriend NPCs for collabs; feuds are fame fuel but risky.</div>
     </div>
   </div>
 
@@ -467,9 +475,14 @@ const CROSSOVER_RE = /(\bx\b|\bvs\b|\bversus\b|mashup|crossover)/i;
 const G = {
   universe:null, npcs:[], player:null, posts:[], rumors:[], day:1,
   feuds:[], ticker:[], over:null, rival:null, seed:1, rng:Math.random,
-  rel:{}, stats:{posts:0, viral:0, feudsWon:0, collabs:0},
+  graph:{}, welcomeBack:null,
+  rel:{}, stats:{posts:0, viral:0, feudsWon:0, collabs:0, verdicts:{}, streak:0, bestStreak:0, stallDays:0, lastRank:13, pivoted:0},
   composeType:'take',
 };
+// Archetype bonuses (shared by newGame + the Reinvention pivot).
+const ARCH_BONUS = {gremlin:{spice:.15}, wholesome:{cred:.15}, analyst:{cred:.2}, menace:{spice:.1}};
+// Archetype order for the Evolve pivot.
+const ARCH_ORDER = ['gremlin','wholesome','analyst','menace'];
 function relGet(a,b){ return G.rel[a+'>'+b] ?? 0; }
 function relAdd(a,b,d){ const k=a+'>'+b; G.rel[k]=clamp((G.rel[k]??0)+d,-100,100); }
 function npcByHandle(h){ return G.npcs.find(n=>n.handle===h); }
@@ -478,18 +491,21 @@ function avatarHTML(npc, size){ const h = npc.seed % 360;
 
 function newGame(universeDef, handle, arch){
   G.universe = universeDef; G.day = 1; G.posts = []; G.rumors = []; G.feuds = [];
-  G.over = null; G.rel = {}; G.stats = {posts:0, viral:0, feudsWon:0, collabs:0};
+  G.over = null; G.rel = {}; G.graph = {}; G.welcomeBack = null;
+  G.stats = {posts:0, viral:0, feudsWon:0, collabs:0, verdicts:{}, streak:0, bestStreak:0, stallDays:0, lastRank:13, pivoted:0};
   G.seed = (Math.random()*1e9)|0; G.rng = mulberry(G.seed);
   G.npcs = universeDef.npcs.map(d => Object.assign({}, d, {
     followers: d.followers, mood:'chill', mem:[], said:[], cd:{}, following:false, isRival:false, traits:{spice:d.spice, loyalty:d.loyalty, chaos:d.chaos, clout:d.clout}
   }));
   for(const [a,b,v] of universeDef.rels){ relAdd(a,b,v); relAdd(b,a,v); }
+  G.npcs.forEach(assignTastes);
+  buildVerseGraph();
   const rival = [...G.npcs].sort((a,b)=>b.followers-a.followers)[0];
   rival.isRival = true; G.rival = rival;
-  const archBonus = {gremlin:{spice:.15}, wholesome:{cred:.15}, analyst:{cred:.2}, menace:{spice:.1}}[arch]||{};
+  const archBonus = ARCH_BONUS[arch]||{};
   G.player = { name: handle.replace(/^@/,'')||'rookie', handle: handle.startsWith('@')?handle:'@'+handle,
     arch, followers: 120, rep: 50, credibility: 50, strikes: 0, spiceBonus: archBonus.spice||0, credBonus: archBonus.cred||0,
-    emoji:'😎', seed: 7 };
+    emoji:'😎', seed: 7, postsToday:0, burnout:0, doubleDown:false };
   // seed the feed with a couple of NPC posts so day 1 isn't empty
   for(let i=0;i<3;i++){ const n = G.npcs[(G.rng()*G.npcs.length)|0]; npcAmbientPost(n, true); }
   pushTicker(`⚡ ${esc(universeDef.name)} is LIVE — ${esc(rival.name)} holds the crown at ${fmtN(rival.followers)} followers. Dethrone them.`);
@@ -497,13 +513,59 @@ function newGame(universeDef, handle, arch){
 }
 
 const PTYPES = {
-  take:   {name:'🔥 Hot Take', emoji:'🔥', spice:.8,  risk:.55, cred:0,   reach:1.0,  target:false},
-  rumor:  {name:'👂 Rumor',    emoji:'👂', spice:.7,  risk:.8,  cred:-4,  reach:1.25, target:false},
-  photo:  {name:'📸 Photo',    emoji:'📸', spice:.3,  risk:.12, cred:2,   reach:.9,   target:false},
-  callout:{name:'🎯 Callout',  emoji:'🎯', spice:.95, risk:.9,  cred:-2,  reach:1.1,  target:true},
-  collab: {name:'🤝 Collab',   emoji:'🤝', spice:.4,  risk:.3,  cred:3,   reach:1.15, target:true},
-  poll:   {name:'📊 Poll',     emoji:'📊', spice:.35, risk:.15, cred:1,   reach:1.0,  target:false},
+  take:   {name:'🔥 Hot Take', emoji:'🔥', spice:.8,  risk:.55, cred:0,   reach:1.0,  target:false, topic:{drama:.7, chaos:.3}},
+  rumor:  {name:'👂 Rumor',    emoji:'👂', spice:.7,  risk:.8,  cred:-4,  reach:1.25, target:false, topic:{chaos:.7, drama:.3}},
+  photo:  {name:'📸 Photo',    emoji:'📸', spice:.3,  risk:.12, cred:2,   reach:.9,   target:false, topic:{glam:.7, wholesome:.3}},
+  callout:{name:'🎯 Callout',  emoji:'🎯', spice:.95, risk:.9,  cred:-2,  reach:1.1,  target:true,  topic:{drama:.8, chaos:.2}},
+  collab: {name:'🤝 Collab',   emoji:'🤝', spice:.4,  risk:.3,  cred:3,   reach:1.15, target:true,  topic:{wholesome:.7, glam:.3}},
+  poll:   {name:'📊 Poll',     emoji:'📊', spice:.35, risk:.15, cred:1,   reach:1.0,  target:false, topic:{analysis:.7, lore:.3}},
 };
+// Topic space for audience-fit. Every NPC carries a taste vector over these
+// topics; a post's spread depends on cosine affinity between the two.
+const TOPICS = ['drama','wholesome','analysis','chaos','glam','lore'];
+// Archetype -> taste profile. Seeded jitter in assignTastes keeps NPCs distinct.
+const ARCH_TASTES = {
+  rival:{drama:.5,glam:.3,chaos:.2}, wholesome:{wholesome:.6,glam:.2,lore:.2},
+  analyst:{analysis:.5,lore:.3,drama:.2}, menace:{drama:.4,chaos:.4,glam:.2},
+  gremlin:{chaos:.5,drama:.3,wholesome:.2}, sage:{lore:.5,analysis:.3,wholesome:.2},
+  edgy:{drama:.3,chaos:.3,lore:.4}, loyalist:{wholesome:.4,lore:.3,drama:.3},
+  hothead:{drama:.5,chaos:.3,glam:.2}, mystery:{lore:.5,chaos:.3,drama:.2},
+  inventor:{analysis:.4,lore:.3,glam:.3}, stoic:{analysis:.4,lore:.3,wholesome:.3},
+  brawler:{drama:.5,chaos:.3,glam:.2}, prodigy:{glam:.4,drama:.3,analysis:.3},
+  clout:{glam:.5,drama:.3,chaos:.2}, rookie:{wholesome:.4,glam:.3,drama:.3},
+  authority:{analysis:.4,lore:.4,drama:.2},
+};
+function topicVec(sparse){ const v = TOPICS.map(t=>sparse[t]||0); const s = v.reduce((a,b)=>a+b,0)||1; return v.map(x=>x/s); }
+function cosine(a, b){ let dot=0, na=0, nb=0; for(let i=0;i<a.length;i++){ dot+=a[i]*b[i]; na+=a[i]*a[i]; nb+=b[i]*b[i]; } if(!na||!nb) return 0; return dot/(Math.sqrt(na)*Math.sqrt(nb)); }
+// Per-NPC taste vector: archetype profile + small seeded jitter, renormalized.
+function assignTastes(npc){
+  const base = ARCH_TASTES[npc.arch] || {};
+  const v = TOPICS.map(t => Math.max(0, (base[t]||0.06) + (G.rng()-0.5)*0.1));
+  const s = v.reduce((a,b)=>a+b,0)||1;
+  npc.tastes = v.map(x=>x/s);
+}
+// How much an NPC cares about a post (0..1 cosine affinity).
+function postAffinity(post, npc){
+  if(!npc.tastes) return .5;
+  return cosine(topicVec(PTYPES[post.type]?.topic||{}), npc.tastes);
+}
+// Follower graph: hub-biased links (high-follower NPCs attract more links) +
+// one wild-card link each. Cascade spread walks these links, not the whole cast.
+function buildVerseGraph(){
+  G.graph = {};
+  const sorted = [...G.npcs].sort((a,b)=>b.followers-a.followers);
+  const hubPool = sorted.slice(0, Math.max(4, Math.ceil(sorted.length*0.6)));
+  for(const n of G.npcs){
+    const links = new Set(); let guard = 0;
+    while(links.size < 3 && guard++ < 30){
+      const cand = pick(G.rng, hubPool);
+      if(cand.handle !== n.handle) links.add(cand.handle);
+    }
+    const wild = pick(G.rng, G.npcs.filter(x=>x.handle!==n.handle && !links.has(x.handle)));
+    if(wild) links.add(wild.handle);
+    G.graph[n.handle] = [...links];
+  }
+}
 const PHOTO_ART = ['🌅🥷✨','🔥🐉🔥','🌙⚔️🌙','💥👊💥','🍜😋🍜','🏯🌸🏯','⚡🌀⚡','🌊🐬🌊'];
 
 // ---------- template banks (sim-mode renderer: LLM only ever re-words these intents) ----------
@@ -575,15 +637,22 @@ function postScore(post){
 }
 function addPost(author, type, text, opts={}){
   const pt = PTYPES[type];
+  const isPlayerPost = author==='player';
+  const baseReach = opts.reach || (isPlayerPost ? G.player.followers*0.6 : (npcByHandle(author)?.followers||1000)*0.4);
   const post = { id: uid(), author, type, text, target: opts.target||null,
     day: G.day, ts: Date.now(), likes:0, reposts:0, comments:[],
-    reach: opts.reach || (author==='player' ? G.player.followers*0.6 : (npcByHandle(author)?.followers||1000)*0.4),
+    reach: baseReach * (isPlayerPost && G.player.doubleDown ? 1.15 : 1),
+    // shareability: how pass-along-able this post is (drives cascade odds)
+    share: clamp(0.4 + pt.spice*0.4 + (isPlayerPost ? G.player.credibility/100*0.2 : 0.1), 0, 1),
+    engagers:[], exposed:[], credited:0, cascadeDone:false, cascadeRounds:[0,0], verdict:null,
     trending:false, heat: pt.spice, photo: type==='photo' ? pick(G.rng, PHOTO_ART) : null };
   G.posts.unshift(post); if(G.posts.length>70) G.posts.pop();
   return post;
 }
-// NPC reacts to a post — utility AI picks action, sim decides everything
-function npcReact(npc, post, instant=false){
+// NPC reacts to a post — utility AI picks action, sim decides everything.
+// opts.force skips the salience gate: the caller (cascade) already decided
+// this NPC was exposed, so npcReact only resolves *how* they engage.
+function npcReact(npc, post, instant=false, opts={}){
   if(G.over) return;
   const isPlayer = post.author==='player';
   const authorH = isPlayer ? G.player.handle : post.author;
@@ -591,7 +660,8 @@ function npcReact(npc, post, instant=false){
   const relV = relGet(npc.handle, authorH)/100;
   const trending = post.trending ? .25 : 0;
   const salience = clamp(.12 + (namedMe?.55:0) + Math.abs(relV)*.25 + trending + npc.clout*.1 + npc.chaos*.08, 0, .95);
-  if(G.rng() > salience) return; // ignoring boring posts is what makes attention earned
+  if(!opts.force && G.rng() > salience) return; // ignoring boring posts is what makes attention earned
+  const markEngaged = ()=>{ if(!post.engagers) post.engagers=[]; if(!post.engagers.includes(npc.handle)) post.engagers.push(npc.handle); };
   const doIt = () => {
     if(G.over) return;
     // utility scores
@@ -600,18 +670,21 @@ function npcReact(npc, post, instant=false){
     const repU = .15 + post.heat*.3 + npc.clout*.3 + (relV>0?.25:0);
     const r = G.rng();
     if(r < repU*.5){ // repost / quote
+      markEngaged();
       post.reposts++; post.reach += npc.followers*.25;
       SFX.repost();
       const stance = relV >= 0 ? 'support' : (npc.spice>.6?'mock':'attack');
       const fb = '🔁 ' + renderLine(stance, npc, {t: post.text.slice(0,60)});
       npcSay(npc, 'quote-post', `quote-posting: "${post.text.slice(0,120)}". Stance: ${stance}.`, fb, post);
     } else if(r < comU){
+      markEngaged();
       const stance = relV > .25 ? 'support' : relV < -.25 ? (npc.spice>.55?'attack':'mock') : (namedMe ? 'mock' : 'support');
       const fb = renderLine(stance, npc, {t: post.text.slice(0,60)});
       npcSay(npc, 'comment', `commenting on: "${post.text.slice(0,120)}". Stance: ${stance}${namedMe?' (you were named)':''}.`, fb, post);
       if(stance==='attack' && isPlayer){ relAdd(npc.handle, G.player.handle, -8); G.player.rep = clamp(G.player.rep-2,0,100); }
       if(stance==='support' && isPlayer){ relAdd(npc.handle, G.player.handle, 5); }
     } else if(r < likeU + comU){
+      markEngaged();
       const w = 1 + Math.floor(npc.followers/4000 * npc.clout);
       post.likes += w;
     }
@@ -621,6 +694,58 @@ function npcReact(npc, post, instant=false){
   };
   if(instant) doIt();
   else { showTyping(npc); setTimeout(doIt, 500 + G.rng()*1400); }
+}
+// Cascade spread (Independent Cascade over the follower graph).
+// Only NPCs who engaged in the previous round get ONE chance each to expose
+// each not-yet-reached graph neighbor. A neighbor who engages becomes a
+// spreader for the next round. Runs after the first settle so the player
+// sees the direct reactions first, then the ripple.
+function runCascade(post){
+  if(G.over || !post || post.cascadeDone || post.author!=='player') return;
+  post.cascadeDone = true;
+  const rounds = [0, 0];
+  let spreaders = [...(post.engagers||[])];
+  for(let round=0; round<2; round++){
+    const nextSpreaders = [];
+    for(const h of spreaders){
+      const sender = npcByHandle(h); if(!sender) continue;
+      const senderPush = 0.5 + 0.5*(0.6*sender.clout + 0.4*sender.chaos);
+      for(const nh of (G.graph[h]||[])){
+        if((post.engagers||[]).includes(nh) || (post.exposed||[]).includes(nh)) continue;
+        const nbr = npcByHandle(nh); if(!nbr) continue;
+        const aff = postAffinity(post, nbr);
+        const p = clamp(0.35 * (0.35 + 1.3*aff) * (0.5 + (post.share||0.5)) * senderPush, 0, 0.95);
+        (post.exposed||(post.exposed=[])).push(nh);
+        if(G.rng() < p){
+          const before = (post.engagers||[]).length;
+          npcReact(nbr, post, true, {force:true});
+          if((post.engagers||[]).length > before) nextSpreaders.push(nh);
+        }
+      }
+    }
+    rounds[round] = nextSpreaders.length;
+    spreaders = nextSpreaders;
+    if(!spreaders.length) break;
+  }
+  post.cascadeRounds = rounds;
+  settlePost(post); // re-tally: only the delta from cascade engagement is credited
+}
+// Post-mortem verdict: what kind of spread was this, and why.
+function verdictFor(post){
+  const eng = post.engagers||[], exposed = post.exposed||[];
+  // Unique NPCs reached: engagers are a subset of exposed (engaging implies seeing).
+  const reachPct = Math.round((new Set([...eng, ...exposed]).size / Math.max(1, G.npcs.length)) * 100);
+  let onT = 0; for(const h of eng){ const n = npcByHandle(h); if(n && postAffinity(post, n) >= .5) onT++; }
+  const onTargetRate = eng.length ? onT/eng.length : 0;
+  const r1 = (post.cascadeRounds||[0,0])[0], r2 = (post.cascadeRounds||[0,0])[1];
+  const rFactor = r1 ? +(r2/Math.max(1,r1)).toFixed(2) : 0;
+  let key, label, tip;
+  if(eng.length <= 1){ key='flop'; label="Didn't Catch"; tip='The Verse scrolled past. Try a post type your audience craves — match the vibe of whoever did engage.'; }
+  else if(eng.length >= 7 || (eng.length >= 5 && r2 > 0)){ key='viral'; label='Viral Hit'; tip='Broke out of your circle and kept spreading. Ride it — post a follow-up while the Verse is warm.'; }
+  else if(eng.length <= 4 && onTargetRate >= .6){ key='niche'; label='Niche Hit'; tip='Loved by your core crowd but it never jumped the fence. Add one broadly-relatable angle to cross over.'; }
+  else { key='slowburn'; label='Slow Burn'; tip='Steady, compounding reach. A follow-up in the same lane could tip it into breakout range.'; }
+  (G.stats.verdicts||(G.stats.verdicts={}))[key] = (G.stats.verdicts[key]||0) + 1;
+  return {key, label, tip, reachPct, onTargetRate:Math.round(onTargetRate*100), rFactor};
 }
 // NPC says something: sim template sync, or LLM-worded when an AI tier is on.
 // The sim ALWAYS chose the intent (kind/stance) — the LLM only re-words it.
@@ -660,24 +785,33 @@ function playerPost(type, text, target){
   const post = addPost('player', type, text.trim(), {});
   G.stats.posts++;
   G.player.credibility = clamp(G.player.credibility + pt.cred, 0, 100);
+  // Grind / burnout: posts past 3 in one day build burnout; rest days cure it.
+  G.player.postsToday = (G.player.postsToday||0) + 1;
+  if(G.player.postsToday > 3) G.player.burnout = clamp((G.player.burnout||0) + 12*(G.player.postsToday-3), 0, 100);
+  if((G.player.burnout||0) >= 80) toast('😩 Burnout! Rest a day — engagement is halved while burned out.');
   SFX.post(); VFX.burst(innerWidth/2, innerHeight-220, 22);
   if(type==='rumor') seedRumor(post);
   if(type==='callout' && target){ relAdd(G.player.handle, target, -25); relAdd(target, G.player.handle, -25); maybeStartFeud(G.player.handle, target); }
   if(type==='collab' && target){ tryCollab(G.player.handle, target, post); }
   // NPC reactions
   for(const n of G.npcs) npcReact(n, post);
-  // engagement tally after reactions settle
-  setTimeout(()=>settlePost(post), 2400);
+  // engagement tally after reactions settle, then the graph cascade ripple
+  setTimeout(()=>{ settlePost(post); setTimeout(()=>runCascade(post), 400); }, 2400);
   renderAll(); save();
   return post;
 }
 function settlePost(post){
   if(G.over) return;
-  const gained = Math.floor(post.likes*.35 + post.comments.length*2.2 + post.reposts*6);
-  if(gained > 0){
-    G.player.followers += gained;
-    VFX.floater(innerWidth/2, 160, '+'+fmtN(gained)+' 👥');
+  // Delta crediting: only engagement gained since the last settle is paid out,
+  // so the cascade re-settle never double-counts.
+  const burnMul = (G.player.burnout||0) >= 80 ? .5 : 1;
+  const total = Math.floor((post.likes*.35 + post.comments.length*2.2 + post.reposts*6) * burnMul);
+  const delta = total - (post.credited||0);
+  if(delta > 0){
+    G.player.followers += delta;
+    VFX.floater(innerWidth/2, 160, '+'+fmtN(delta)+' 👥');
   }
+  post.credited = total;
   const velocity = post.likes + post.comments.length*3 + post.reposts*5;
   if(!post.trending && velocity > 40 + G.player.followers*.02){
     post.trending = true; G.stats.viral++;
@@ -686,6 +820,8 @@ function settlePost(post){
     pushTicker(`🔥 TRENDING: "${esc(post.text.slice(0,50))}…" is blowing up!`);
     toast('🔥 YOUR POST IS TRENDING!');
   }
+  // Verdict lands once, after the cascade has finished rippling.
+  if(post.cascadeDone && !post.verdict && post.author==='player') post.verdict = verdictFor(post);
   // scandal risk on debunked rumors handled in rumor tick
   checkWinLose(); renderAll(); save();
 }
@@ -767,6 +903,17 @@ function rivalAct(){
 function nextDay(){
   if(G.over || G._ticking) return; G._ticking = true;
   SFX.day(); G.day++;
+  // Consistency streak + burnout recovery (rest days cure more).
+  const postedToday = (G.player.postsToday||0) > 0;
+  G.player.postsToday = 0;
+  if(postedToday){ G.stats.streak++; G.stats.bestStreak = Math.max(G.stats.bestStreak||0, G.stats.streak); }
+  else G.stats.streak = 0;
+  G.player.burnout = Math.max(0, (G.player.burnout||0) - (postedToday ? 8 : 25));
+  if(G.stats.streak >= 3){
+    const bonus = Math.floor(G.player.followers*.02);
+    G.player.followers += bonus;
+    pushTicker(`🔥 ${G.stats.streak}-day posting streak! Consistency bonus (+${fmtN(bonus)} followers)`);
+  }
   // NPC scheduled posts
   for(const n of G.npcs){ if(G.rng() < .5) npcAmbientPost(n); n.mood = pick(G.rng,['chill','hype','salty','focused']); }
   rivalAct();
@@ -818,8 +965,36 @@ function nextDay(){
   // milestone check
   const tiers = [1000,10000,50000,250000];
   for(const t of tiers){ if(G.player.followers>=t && !G['ms'+t]){ G['ms'+t]=1; SFX.milestone(); VFX.confetti(70); pushTicker(`🎉 MILESTONE: ${fmtN(t)} followers!!`); toast(`🎉 ${fmtN(t)} followers!`); } }
+  // Stall tracking: same rank 3 days running unlocks the one-time Reinvention pivot.
+  const rankNow = playerRank();
+  if(rankNow === (G.stats.lastRank ?? 13) && G.day > 3) G.stats.stallDays = (G.stats.stallDays||0) + 1;
+  else G.stats.stallDays = 0;
+  G.stats.lastRank = rankNow;
   G._ticking = false;
   checkWinLose(); renderAll(); save();
+}
+// One-time Reinvention pivot (offered after stalling 3 days at one rank).
+function doPivot(mode){
+  if(G.stats.pivoted || G.over || !G.player) return false;
+  G.stats.pivoted = 1;
+  if(mode === 'evolve'){
+    const cur = ARCH_ORDER.indexOf(G.player.arch);
+    const next = ARCH_ORDER[(cur + 1) % ARCH_ORDER.length];
+    const bonus = ARCH_BONUS[next]||{};
+    G.player.arch = next;
+    G.player.spiceBonus = bonus.spice||0; G.player.credBonus = bonus.cred||0;
+    G.player.credibility = 60; G.player.burnout = 0;
+    pushTicker(`🦋 You REINVENTED as ${next} — fresh audience, fresh energy!`);
+    toast('🦋 Reinvented! New vibe, new audience.');
+  } else {
+    G.player.doubleDown = true;
+    G.player.rep = clamp(G.player.rep - 5, 0, 100);
+    pushTicker('💪 You DOUBLED DOWN — reach boosted 15%, reputation took a hit.');
+    toast('💪 Doubled down! +15% reach.');
+  }
+  SFX.milestone(); VFX.confetti(60);
+  renderAll(); save();
+  return true;
 }
 function worldEvent(){
   const ev = pick(G.rng,[
@@ -855,6 +1030,8 @@ function gameOver(won, sub){
     <div class="kv"><span>🔥 Viral hits</span><b>${G.stats.viral}</b></div>
     <div class="kv"><span>🥊 Feuds won</span><b>${G.stats.feudsWon}</b></div>
     <div class="kv"><span>🤝 Collabs</span><b>${G.stats.collabs}</b></div>
+    <div class="kv"><span>🔥 Best posting streak</span><b>${G.stats.bestStreak||0} days</b></div>
+    <div class="kv"><span>📊 Post verdicts</span><b>${Object.entries(G.stats.verdicts||{}).map(([k,v])=>`${k} ×${v}`).join(' · ')||'—'}</b></div>
     <div class="kv"><span>🌌 Universe</span><b>${esc(G.universe.name)}</b></div>`;
   localStorage.removeItem('iv_save_v1');
   showScreen('screen-gameover');
@@ -1013,6 +1190,7 @@ function renderHUD(){
   $('hdr-day').textContent = G.day;
   $('hdr-followers').textContent = fmtN(G.player.followers);
   $('hdr-rank').textContent = playerRank();
+  $('hdr-streak').textContent = G.stats.streak||0;
   $('hdr-rep').textContent = Math.round(G.player.rep);
   $('hdr-scandal').textContent = Math.floor(G.player.strikes);
   $('hdr-scandal-wrap').style.color = G.player.strikes>=2 ? 'var(--danger)' : '';
@@ -1029,11 +1207,13 @@ function postCard(p){
     (p.type==='poll'?'<span class="badge poll">📊 POLL</span>':'') +
     (p.type==='callout'?'<span class="badge rumor">🎯 CALLOUT</span>':'');
   const comments = p.comments.map(c=>`<div class="comment">${avatarHTML({emoji:c.emoji,seed:c.seed},28)}<div class="cb"><span class="cn">${esc(c.by)}</span><br>${esc(c.text)}</div></div>`).join('');
+  const verdict = p.verdict ? `<div class="hint">📊 Verdict: <b>${esc(p.verdict.label)}</b> — ${esc(p.verdict.tip)} (reach ${p.verdict.reachPct}%, on-target ${p.verdict.onTargetRate}%, R=${p.verdict.rFactor})</div>` : '';
   return `<div class="post${p.trending?' trending':''}" data-pid="${p.id}">
     <div class="head">${av}<div class="who"><div class="nm">${nm}${badges}</div><div class="hd">${hd} · D${p.day} · ${pt.emoji} ${esc(pt.name.replace(/^[^\s]+\s/,''))}</div></div></div>
     <div class="txt">${esc(p.text)}${p.target?` <b style="color:var(--neon-pink)">${esc(p.target)}</b>`:''}</div>
     ${p.photo?`<div class="photoart">${p.photo}</div>`:''}
     <div class="actions"><span>💜 ${fmtN(p.likes)}</span><span>💬 ${p.comments.length}</span><span>🔁 ${fmtN(p.reposts)}</span></div>
+    ${verdict}
     ${comments?`<div class="comments">${comments}</div>`:''}
   </div>`;
 }
@@ -1058,7 +1238,15 @@ function renderVerse(){
     </div>`).join('');
   $('verse-grid').querySelectorAll('.npccard').forEach(c=>c.onclick=()=>openNpc(c.dataset.h));
 }
-function renderAll(){ if(!G.player) return; renderHUD(); renderFeed(); renderRanks(); renderVerse(); }
+function renderAll(){
+  if(!G.player) return; renderHUD(); renderFeed(); renderRanks(); renderVerse();
+  const pb = $('pivot-bar');
+  if(pb) pb.style.display = (!G.over && !G.stats.pivoted && (G.stats.stallDays||0) >= 3) ? 'block' : 'none';
+  const bl = $('burnout-line');
+  if(bl){ const b = G.player.burnout||0;
+    if(b > 0){ bl.style.display='block'; bl.textContent = b >= 80 ? `😩 Burnout ${Math.round(b)}% — engagement HALVED. Rest a day (post nothing) to recover.` : `😩 Burnout ${Math.round(b)}% — pace yourself, or rest a day to recover.`; }
+    else bl.style.display='none'; }
+}
 function openNpc(handle){
   const n = npcByHandle(handle); if(!n) return; SFX.click();
   $('npcp-avatar').textContent = n.emoji;
@@ -1153,7 +1341,8 @@ function save(){
       npcs:G.npcs.map(n=>({...n, said:n.said.slice(-6)})),
       posts:G.posts.slice(0,40), rumors:G.rumors.map(r=>({...r, spreaders:[...r.spreaders], skeptics:[...r.skeptics]})),
       rel:G.rel, stats:G.stats, feuds:G.feuds, ticker:G.ticker.slice(0,4),
-      rivalH: G.rival?.handle, ms:Object.keys(G).filter(k=>k.startsWith('ms')).reduce((o,k)=>(o[k]=1,o),{}) };
+      rivalH: G.rival?.handle, savedAt: Date.now(),
+      ms:Object.keys(G).filter(k=>k.startsWith('ms')).reduce((o,k)=>(o[k]=1,o),{}) };
     localStorage.setItem('iv_save_v1', JSON.stringify(data));
   }catch(e){ /* quota — ignore */ }
 }
@@ -1164,9 +1353,20 @@ function load(){
     G.universe=d.universe; G.day=d.day; G.seed=d.seed; _uid=d.uid||1; G.rng=mulberry(G.seed);
     G.player=d.player; G.npcs=d.npcs; G.posts=d.posts||[];
     G.rumors=(d.rumors||[]).map(r=>({...r, spreaders:new Set(r.spreaders), skeptics:new Set(r.skeptics)}));
-    G.rel=d.rel||{}; G.stats=d.stats||{posts:0,viral:0,feudsWon:0,collabs:0}; G.feuds=d.feuds||[]; G.ticker=d.ticker||[];
+    G.rel=d.rel||{}; G.stats=Object.assign({posts:0,viral:0,feudsWon:0,collabs:0,verdicts:{},streak:0,bestStreak:0,stallDays:0,lastRank:13,pivoted:0}, d.stats||{}); G.feuds=d.feuds||[]; G.ticker=d.ticker||[];
     G.rival = npcByHandle(d.rivalH) || [...G.npcs].sort((a,b)=>b.followers-a.followers)[0];
     Object.assign(G, d.ms||{});
+    // Backfill for pre-upgrade saves: tastes + follower graph are derivable.
+    for(const n of G.npcs) if(!n.tastes) assignTastes(n);
+    buildVerseGraph();
+    // Welcome-back: away 5+ min earns a small capped passive bonus (max 5%).
+    G.welcomeBack = null;
+    const awayMs = Date.now() - (d.savedAt || Date.now());
+    if(awayMs > 5*60*1000){
+      const hrs = Math.min(8, awayMs/3600000);
+      const gain = Math.min(Math.floor(G.player.followers*0.01*hrs), Math.floor(G.player.followers*0.05));
+      if(gain > 0){ G.player.followers += gain; G.welcomeBack = {gain, hrs}; }
+    }
     return true;
   }catch(e){ return false; }
 }
@@ -1196,6 +1396,8 @@ function boot(){
   $('btn-send-post').onclick = ()=>{ const t=$('compose-text').value; const tgt=$('compose-target').value;
     if(playerPost(G.composeType, t, tgt)){ $('modal-compose').classList.remove('open'); } };
   $('btn-next-day').onclick = ()=>nextDay();
+  $('btn-pivot-evolve').onclick = ()=>{ SFX.click(); doPivot('evolve'); };
+  $('btn-pivot-double').onclick = ()=>{ SFX.click(); doPivot('double'); };
   $('btn-npc-close').onclick = ()=>{ SFX.click(); $('modal-npc').classList.remove('open'); };
   $('btn-restart').onclick = ()=>{ SFX.click(); showScreen('screen-splash'); if(load()) $('btn-continue').style.display='block'; };
   $('btn-ai-puter').onclick = ()=>AI.enablePuter();
@@ -1208,17 +1410,20 @@ function boot(){
   $('inp-groq-key').value = localStorage.getItem('iv_groq')||'';
   $('inp-gemini-key').value = localStorage.getItem('iv_gemini')||'';
   if(load()){ $('btn-continue').style.display='block';
-    $('btn-continue').onclick = ()=>{ SFX.click(); $('btn-compose').style.display='block'; showScreen('screen-game'); renderAll(); AI.detect(); }; }
+    $('btn-continue').onclick = ()=>{ SFX.click(); $('btn-compose').style.display='block'; showScreen('screen-game'); renderAll(); AI.detect();
+      if(G.welcomeBack){ pushTicker(`👋 Welcome back! Your Verse grew while you were away (+${fmtN(G.welcomeBack.gain)} followers)`); toast(`👋 Welcome back! +${fmtN(G.welcomeBack.gain)} followers while you were away`); G.welcomeBack = null; } }; }
   showScreen('screen-splash');
 }
 document.addEventListener('DOMContentLoaded', boot);
 // ---------- test hooks (headless) ----------
 window.__IV = { G, UNIVERSES, PTYPES, newGame, playerPost, nextDay, npcReact, findPack, AI,
   checkWinLose, maybeStartFeud, gameOver, playerRank, leaderboard,
+  runCascade, verdictFor, postAffinity, assignTastes, buildVerseGraph, doPivot, settlePost, addPost, save, load, TOPICS,
   domIds: ['screen-splash','screen-universe','screen-cast','screen-game','screen-gameover','btn-enter','btn-continue',
   'uni-input','uni-chips','btn-surprise','btn-start-verse','player-handle','player-archetype','ai-tier-badge','ai-tier-hint',
   'cast-grid','cast-sub','btn-enter-verse','btn-back-uni','hdr-day','hdr-followers','hdr-rank','hdr-rep','hdr-scandal',
-  'hdr-scandal-wrap','ticker','drama-banner','feed-list','btn-next-day','ranks-list','verse-grid','ai-tier-badge2',
+  'hdr-scandal-wrap','hdr-streak','ticker','drama-banner','feed-list','btn-next-day','burnout-line','pivot-bar',
+  'btn-pivot-evolve','btn-pivot-double','ranks-list','verse-grid','ai-tier-badge2',
   'btn-ai-puter','inp-groq-key','inp-gemini-key','btn-save-keys','btn-reset-save','tgl-sfx','tgl-vfx','btn-save-now',
   'tab-feed','tab-ranks','tab-verse','tab-more','panel-feed','panel-ranks','panel-verse','panel-more','btn-compose',
   'modal-compose','compose-types','compose-text','compose-target','compose-target-wrap','spice-meter','btn-send-post',

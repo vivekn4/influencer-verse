@@ -20,8 +20,12 @@ no one from Narnia will ever show up — crossovers only happen with your explic
 2. **Make your handle** and pick a vibe (Chaos Gremlin / Wholesome / Analyst / Menace).
 3. **Post**: hot takes 🔥, rumors 👂, photos 📸, callouts 🎯, collabs 🤝, polls 📊.
 4. **Go viral**: engagement → followers. NPCs react with real personality-driven opinions.
-5. **Survive**: scandals earn strikes — 3 strikes or 0 reputation = **canceled** 💀.
-6. **Win**: reach **#1** on the leaderboard and dethrone the rival 👑.
+5. **Ride the cascade**: engagers expose your post to their follower-graph links — a good post ripples outward. Every post earns a verdict (Flop / Niche Hit / Slow Burn / Viral Hit) with a tip on why it spread (or didn't). Match post type to the crowd's tastes.
+6. **Stay consistent, don't burn out**: posting daily builds a streak (+2% followers at 3+ days). 4+ posts in one day builds burnout, which halves engagement until you rest a day.
+7. **Reinvention**: stall 3 days at one rank to unlock a one-time pivot — Evolve into a new vibe for a fresh audience, or Double Down for +15% reach at a reputation cost.
+8. **Welcome back**: return after 5+ minutes away and your Verse kept growing a little (capped at +5% followers).
+9. **Survive**: scandals earn strikes — 3 strikes or 0 reputation = **canceled** 💀.
+10. **Win**: reach **#1** on the leaderboard and dethrone the rival 👑.
 
 ## The AI (sim-first, always playable)
 

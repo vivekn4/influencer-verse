@@ -142,6 +142,52 @@ capped; `prefers-reduced-motion` respected.
 
 ---
 
+## 8. Teardown upgrades (2026-10-14 — REA study of 3 open-source sims, re-implemented in original code)
+
+Comparators (all cloned from official GitHub repos; zero code/assets/strings copied):
+- **virality-simulator** (nagashreeavd) — NO LICENSE file in repo → treated as unlicensed:
+  ideas only. Mechanisms learned: Independent Cascade diffusion, Barabási–Albert
+  preferential-attachment graph, topic-vector cosine affinity, persona traits
+  (susceptibility/shareDrive/influence/fickleness), shareability levers, verdict
+  classification + R-factor.
+- **liveops-tycoon** (stonedhawk, MIT) — offline progress credit, delta-time cap,
+  exponential upgrade costs (base × 1.15^owned), derived-stats recalculation.
+- **creator-journey-simulator** (tanya-garg10, MIT) — 7-chapter creator arc,
+  consistency calendar, burnout meter, pivot choice (evolve vs double-down),
+  milestone timeline. REA's JS analyzer failed on this repo (exit 1, no evidence);
+  mechanisms taken from direct source read of its MIT-licensed script.
+
+Implemented (all in `index.html`, sim-first, no new dependencies):
+1. **Follower-graph cascade** — `buildVerseGraph()` (hub-biased links + wild-card),
+   `runCascade()` (2-round Independent Cascade: only last round's engagers get one
+   chance per unreached neighbor; p from affinity × shareability × sender push).
+   `npcReact(..., {force})` keeps one engagement resolver. `settlePost` uses
+   delta-crediting (`post.credited`) so the cascade re-settle never double-pays.
+2. **Topic affinity** — `TOPICS` (drama/wholesome/analysis/chaos/glam/lore),
+   per-NPC `tastes` (archetype profile + seeded jitter), `postAffinity()` cosine.
+   Post types carry topic profiles; cascade odds + verdict on-target rate use it.
+3. **Post verdicts** — `verdictFor()`: Flop / Niche Hit / Slow Burn / Viral Hit
+   + tip + reach% (unique NPCs reached) + on-target% + R-factor, rendered on the
+   post card; tallied in `G.stats.verdicts` and shown on the game-over screen.
+4. **Retention loop** — daily **streak** (+2% followers at 3+ days, HUD chip),
+   **burnout** (4+ posts/day builds it, halves engagement at ≥80%, rest days cure),
+   **welcome-back** bonus (away 5+ min → +1%/hr, capped at +5%, announced on Continue).
+5. **Reinvention pivot** — stall 3 days at one rank → one-time choice: Evolve
+   (next archetype, credibility reset to 60, burnout cleared) or Double Down
+   (+15% post reach, −5 rep). `doPivot()` is one-shot (`G.stats.pivoted`).
+   Old saves load cleanly: tastes/graph backfilled, stats defaults merged, no
+   welcome-back without `savedAt`.
+
+Deliberately skipped: LiveOps-style exponential upgrade shop (no currency exists
+in this game — followers ARE the score, so a shop would cannibalize the win
+condition); delta-time cap (turn-based, no realtime loop); seeded-RNG replay
+(virality's hash-seed reproducibility — the Verse's seeded `mulberry` RNG already
+covers in-run determinism; full replay is out of scope).
+QA: `node --check` on extracted module script + 2 zero-dependency headless
+harnesses (49 assertions total, incl. a real cascade-verdict bug caught and
+fixed: reach% double-counted engagers who were also exposed — now union-based).
+No browser/JS DOM available in the worker env, so no visual check was run.
+
 ## 7. VN signature & portfolio requirements
 - "VN" tag in header/footer + README + description.txt.
 - Maximalist neon styling: dark bg, neon gradients, glow text, animated borders.
